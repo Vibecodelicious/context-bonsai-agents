@@ -1,0 +1,12 @@
+[submodule "cline"]
+	path = cline
+	url = https://github.com/cline/cline.git
+[submodule "codex"]
+	path = codex
+	url = org-14957082@github.com:openai/codex.git
+[submodule "gemini-cli"]
+	path = gemini-cli
+	url = git@github.com:google-gemini/gemini-cli.git
+[submodule "context-bonsai-kilo/kilocode"]
+	path = context-bonsai-kilo/kilocode
+	url = git@github.com:Kilo-Org/kilocode.git
