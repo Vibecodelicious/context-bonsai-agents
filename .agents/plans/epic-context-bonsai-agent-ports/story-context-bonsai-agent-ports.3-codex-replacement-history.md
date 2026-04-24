@@ -159,7 +159,7 @@ For durable retrieve support, v1 extends the existing persisted `CompactedItem` 
 
 - Approval Status: `approved`
 - Approval Citation: `user message 2026-04-23: "All stories are approved."`
-- Plan Commit Hash: `pending-next-commit`
+- Plan Commit Hash: `2ce34af3e79031d3b8142d52176d700ec81836b6`
 - Ready-for-Orchestration: `yes`
 
 ## Validation Loop Results
