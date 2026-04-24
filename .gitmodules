@@ -10,3 +10,15 @@
 [submodule "context-bonsai-kilo/kilocode"]
 	path = context-bonsai-kilo/kilocode
 	url = git@github.com:Kilo-Org/kilocode.git
+[submodule "kilo_context_bonsai"]
+	path = kilo_context_bonsai
+	url = file:///home/basil/projects/.context-bonsai-side-bares/kilo_context_bonsai.git
+[submodule "gemini-cli_context_bonsai"]
+	path = gemini-cli_context_bonsai
+	url = file:///home/basil/projects/.context-bonsai-side-bares/gemini-cli_context_bonsai.git
+[submodule "codex_context_bonsai"]
+	path = codex_context_bonsai
+	url = file:///home/basil/projects/.context-bonsai-side-bares/codex_context_bonsai.git
+[submodule "cline_context_bonsai"]
+	path = cline_context_bonsai
+	url = file:///home/basil/projects/.context-bonsai-side-bares/cline_context_bonsai.git
