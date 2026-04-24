@@ -94,7 +94,7 @@ The implementation should target full bonsai parity:
 - `.opencode/context-bonsai/<session-id>.json` inside the worktree where Kilo runs - plugin-managed archive metadata store
 
 ### Files Modified (agent repo: `context-bonsai-kilo/kilocode/`)
-- `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/.opencode/opencode.jsonc` - add a `plugin` entry pointing at the side-repo artifact (for example `../../kilo_context_bonsai/src/plugin.ts` or its built output, per Kilo plugin discovery rules)
+- `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/.opencode/opencode.jsonc` - add a `plugin` entry pointing at the side-repo artifact. Kilo resolves plugin specs relative to the config file's directory (`kilocode/.opencode/`), so the correct relative path up to the planning repo root is THREE parent segments: `../../../kilo_context_bonsai/src/plugin.ts`. Validate the resolved path exists as part of the seam test.
 - `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/plugin/src/index.ts` - extend `experimental.chat.messages.transform` input shape with optional gauge telemetry fields (`kilocode_change`)
 - `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/src/session/llm.ts` - extend `experimental.chat.system.transform` input with the same optional gauge telemetry fields (`kilocode_change`)
 - `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/src/agent/agent.ts` - extend the second `experimental.chat.system.transform` callsite with the same optional telemetry fields (`kilocode_change`)
