@@ -44,6 +44,26 @@
 **Description:** Plan a Cline implementation that keeps hook-side guidance/gauge but extends the canonical history overwrite path for prune/retrieve.
 **Implementation Plan:** `.agents/plans/epic-context-bonsai-agent-ports/story-context-bonsai-agent-ports.4-cline-canonical-history.md`
 
+## Architecture Stance (epic-level)
+
+Each port splits work between a new side-project submodule and the agent repo:
+
+- Side-project submodules host the bulk of bonsai logic (plugin source, MCP server, Rust library, or extractable pure-logic helpers) plus project docs and coding standards.
+- Agent repos receive only narrow capability-enabling seams (activation/bootstrap, hook-input extensions, replacement-history integration, canonical-history applier wiring).
+- Docs for these projects live in the side repos, not in the agent repos.
+
+Side-project submodules:
+
+- `kilo_context_bonsai`
+- `gemini-cli_context_bonsai`
+- `codex_context_bonsai`
+- `cline_context_bonsai`
+
+## Parallelism Rule
+
+- Projects (the four listed above) run in parallel.
+- Stories within a given project run sequentially so that changes do not collide inside the same repositories.
+
 ## Dependencies and Integration
 
 - Prerequisites:
@@ -53,11 +73,16 @@
 - Enables:
   - per-agent implementation work with clear target inventories and validation commands
   - future e2e parity protocols and release-readiness checks
-- Integration points:
+- Integration points (agent repos):
   - `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode`
   - `/home/basil/projects/context-bonsai-agents/gemini-cli`
   - `/home/basil/projects/context-bonsai-agents/codex`
   - `/home/basil/projects/context-bonsai-agents/cline`
+- Integration points (side-project submodules):
+  - `/home/basil/projects/context-bonsai-agents/kilo_context_bonsai`
+  - `/home/basil/projects/context-bonsai-agents/gemini-cli_context_bonsai`
+  - `/home/basil/projects/context-bonsai-agents/codex_context_bonsai`
+  - `/home/basil/projects/context-bonsai-agents/cline_context_bonsai`
 
 ## Risks and Mitigations
 
@@ -81,5 +106,5 @@
 - Missing details check: pass after iterative story-level refinement
 - Ambiguity check: pass after iterative story-level refinement
 - Worktree artifact risk check: pass
-- Plan-commit status check: pending
-- Iterations run: 4
+- Plan-commit status check: approved at epic and story level; stories record commit hashes after this commit lands
+- Iterations run: 5 (added architecture split plus side-project submodules on 2026-04-23)

@@ -8,11 +8,15 @@
 
 Port Context Bonsai to Kilo CLI with the least possible shared-core drift.
 
-Kilo is the strongest host in this workspace because it already exposes the two critical extension points: message transformation and system transformation. The implementation will be a repo-local plugin activated through `.opencode/opencode.jsonc`, with one capability-enabling shared-core change: extending hook input so gauge data reaches the plugin at every current `system.transform` caller.
+The bulk of the port lives in the `kilo_context_bonsai` side-project submodule. Kilo's agent repo only receives narrow capability-enabling seams:
 
-Archive persistence for v1 is plugin-managed sidecar storage under the worktree-local `.opencode/context-bonsai/` directory, keyed one file per `sessionID`: `.opencode/context-bonsai/<sessionID>.json`.
+- plugin activation in `.opencode/opencode.jsonc` pointing at the side-project artifact
+- optional gauge-telemetry fields on `experimental.chat.messages.transform` and `experimental.chat.system.transform` inputs so the plugin can render the in-band gauge (the one shared-core capability seam, marked with `kilocode_change`)
+- a minimal seam integration test under `packages/opencode/test/kilocode/`
 
-Message transform can already recover `sessionID` from `output.messages[*].info.sessionID`, so no seam is required for session identity. The only required capability seam is on transform inputs for gauge telemetry: extend the hook input with `usedTokens`, `usableBudget`, and `percentUsed`, and make those fields optional so both current `system.transform` callers remain type-safe after `session/llm.ts` and `agent/agent.ts` are updated.
+Plugin logic (prune, retrieve, placeholder rendering, gauge severity bands, guards, archive store) lives in `kilo_context_bonsai/src/*`. Side-repo tests run under `bun:test` without touching the Kilo runtime.
+
+Archive persistence for v1 remains plugin-managed sidecar storage keyed by `sessionID`. The plugin reads `sessionID` from `output.messages[*].info.sessionID` inside message transform, so no session-identity seam is required.
 
 The implementation should target full bonsai parity:
 - `context-bonsai-prune`
@@ -21,6 +25,12 @@ The implementation should target full bonsai parity:
 - in-band gauge injection
 - system guidance injection
 - persisted archive state compatible with session reload
+
+## Architecture Split
+
+- **Side repo (`kilo_context_bonsai`)**: plugin source, guards, archive store, gauge, placeholder, all tests that do not require the Kilo runtime. Authoritative coding standards: `kilo_context_bonsai/STANDARDS.md`.
+- **Agent repo (`context-bonsai-kilo/kilocode`)**: `.opencode/opencode.jsonc` plugin entry, the gauge-telemetry hook-input seam in shared OpenCode files (each touched file marked with `kilocode_change` per `AGENTS.md`), and a single seam integration test. Authoritative coding standards: `kilocode/AGENTS.md`.
+- **Feature branch**: all agent-repo commits land on `feat/context-bonsai-port` inside the `context-bonsai-kilo/kilocode` submodule; side-repo commits land on `feat/context-bonsai-port` inside `kilo_context_bonsai`. The parent planning repo's submodule pointers are not advanced by this story.
 
 ## User Model
 
@@ -64,20 +74,32 @@ The implementation should target full bonsai parity:
 - `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/src/tool/registry.ts` - tool registration and execution path
 - `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/AGENTS.md` - upstream-minimization and Kilo-marking rules
 
-### New Files to Create
-- `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/.opencode/plugins/context-bonsai.ts` - primary plugin implementation
-- `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/test/kilocode/context-bonsai.test.ts` - targeted parity tests
+### New Files to Create (side repo: `kilo_context_bonsai/`)
+- `/home/basil/projects/context-bonsai-agents/kilo_context_bonsai/package.json` - side-repo package manifest, `bun:test` dev dep, oxlint config reference
+- `/home/basil/projects/context-bonsai-agents/kilo_context_bonsai/tsconfig.json` - side-repo TS config
+- `/home/basil/projects/context-bonsai-agents/kilo_context_bonsai/src/plugin.ts` - default-exported plugin entry consumed by Kilo's `.opencode/opencode.jsonc`
+- `/home/basil/projects/context-bonsai-agents/kilo_context_bonsai/src/guards.ts` - pattern resolution, boundary and same-step prune/retrieve guards (pure)
+- `/home/basil/projects/context-bonsai-agents/kilo_context_bonsai/src/archive-store.ts` - plugin-managed archive persistence keyed by `sessionID`
+- `/home/basil/projects/context-bonsai-agents/kilo_context_bonsai/src/gauge.ts` - severity-band logic from `usedTokens` / `usableBudget`
+- `/home/basil/projects/context-bonsai-agents/kilo_context_bonsai/src/placeholder.ts` - placeholder rendering (anchor id, range end, summary, index terms)
+- `/home/basil/projects/context-bonsai-agents/kilo_context_bonsai/test/plugin.test.ts` - plugin-level parity tests
+- `/home/basil/projects/context-bonsai-agents/kilo_context_bonsai/test/guards.test.ts` - guard-path tests (unresolved/ambiguous boundary, same-step retrieve)
+- `/home/basil/projects/context-bonsai-agents/kilo_context_bonsai/test/gauge.test.ts` - gauge band coverage
+- `/home/basil/projects/context-bonsai-agents/kilo_context_bonsai/docs/story.md` - pointer to parent story plan
+
+### New Files to Create (agent repo: `context-bonsai-kilo/kilocode/`)
+- `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/test/kilocode/context-bonsai.test.ts` - seam integration test confirming gauge telemetry reaches the plugin
 
 ### Runtime-Created Files
-- `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/.opencode/context-bonsai/<session-id>.json` - plugin-managed archive metadata store
+- `.opencode/context-bonsai/<session-id>.json` inside the worktree where Kilo runs - plugin-managed archive metadata store
 
-### Files Modified
-- `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/.opencode/opencode.jsonc` - add a `plugin` entry pointing at `./plugins/context-bonsai.ts`
-- `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/plugin/src/index.ts` - extend `experimental.chat.messages.transform` input shape with gauge telemetry fields
-- `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/src/session/llm.ts` - extend `experimental.chat.system.transform` input with the same gauge telemetry fields
-- `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/src/agent/agent.ts` - extend the second `experimental.chat.system.transform` callsite with the same optional telemetry fields
-- `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/src/session/prompt.ts` - pass gauge telemetry into plugin message-transform input
-- `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/src/session/compaction.ts` - keep compaction-time transform invocation aligned with the same input shape
+### Files Modified (agent repo: `context-bonsai-kilo/kilocode/`)
+- `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/.opencode/opencode.jsonc` - add a `plugin` entry pointing at the side-repo artifact (for example `../../kilo_context_bonsai/src/plugin.ts` or its built output, per Kilo plugin discovery rules)
+- `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/plugin/src/index.ts` - extend `experimental.chat.messages.transform` input shape with optional gauge telemetry fields (`kilocode_change`)
+- `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/src/session/llm.ts` - extend `experimental.chat.system.transform` input with the same optional gauge telemetry fields (`kilocode_change`)
+- `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/src/agent/agent.ts` - extend the second `experimental.chat.system.transform` callsite with the same optional telemetry fields (`kilocode_change`)
+- `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/src/session/prompt.ts` - pass gauge telemetry into plugin message-transform input (`kilocode_change`)
+- `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/src/session/compaction.ts` - keep compaction-time transform invocation aligned with the same input shape (`kilocode_change`)
 
 ### Relevant Documentation
 - [kilo-context-bonsai-spec.md](/home/basil/projects/context-bonsai-agents/docs/agent-specs/kilo-context-bonsai-spec.md)
@@ -127,6 +149,8 @@ The implementation should target full bonsai parity:
 
 ## Validation Commands
 
+- `cd /home/basil/projects/context-bonsai-agents/kilo_context_bonsai && bun test`
+- `cd /home/basil/projects/context-bonsai-agents/kilo_context_bonsai && bun run typecheck` (if tsconfig/typecheck script is defined)
 - `cd /home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode && bun run --cwd packages/opencode test test/kilocode/context-bonsai.test.ts`
 - `cd /home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode && bun run --cwd packages/opencode typecheck`
 - `cd /home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode && bun turbo typecheck`
@@ -141,10 +165,10 @@ The implementation should target full bonsai parity:
 
 ## Plan Approval and Commit Status
 
-- Approval Status: `pending`
-- Approval Citation: `none`
-- Plan Commit Hash: `none`
-- Ready-for-Orchestration: `no`
+- Approval Status: `approved`
+- Approval Citation: `user message 2026-04-23: "All stories are approved."`
+- Plan Commit Hash: `pending-next-commit`
+- Ready-for-Orchestration: `yes`
 
 ## Validation Loop Results
 

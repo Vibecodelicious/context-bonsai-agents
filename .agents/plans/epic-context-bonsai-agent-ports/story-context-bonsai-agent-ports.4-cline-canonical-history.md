@@ -8,11 +8,19 @@
 
 Implement Context Bonsai for Cline as a hybrid design: required bonsai guidance is injected through the internal system-prompt path, hooks remain available for gauge or precompact advisory context, and prune/retrieve extend the canonical history overwrite path already used by message-state persistence, checkpoint restore, and `ContextManager` context-history state.
 
-The plan should not attempt a hook-only transcript layer. The actual provider request uses `truncatedConversationHistory` assembled in core, so prune/retrieve must ultimately update that canonical path.
+Cline has no plugin surface capable of authoritative transcript replacement, so the agent-repo share of this port is larger than the other three projects. Even so, the extractable pure-logic pieces (pattern guards, placeholder rendering, gauge severity bands, shared archive types) live in the `cline_context_bonsai` side-project submodule and are consumed by the Cline agent repo through a `file:` workspace dependency. The side repo also owns this project's docs and standards.
 
-The canonical entrypoint for v1 should be the existing summarize/precompact flow centered on `SummarizeTaskHandler` and `executePreCompactHookWithCleanup`, not a parallel sibling lifecycle.
-The model-facing prune/retrieve contract should be implemented as real native Cline tools, with their handlers delegating into the same canonical bonsai applier used by the summarize/precompact path.
-Archive state for v1 should live in a dedicated task-directory sidecar file, `context_bonsai_archives.json`, owned by core storage utilities rather than hidden in `context_history.json` or UI-only task state. That sidecar must store both archive metadata and the archived conversation payload needed for later retrieve.
+The plan does not attempt a hook-only transcript layer. The actual provider request uses `truncatedConversationHistory` assembled in core, so prune/retrieve must ultimately update that canonical path.
+
+The canonical entrypoint for v1 is the existing summarize/precompact flow centered on `SummarizeTaskHandler` and `executePreCompactHookWithCleanup`, not a parallel sibling lifecycle.
+The model-facing prune/retrieve contract is implemented as real native Cline tools, with their handlers delegating into the same canonical bonsai applier used by the summarize/precompact path.
+Archive state for v1 lives in a dedicated task-directory sidecar file, `context_bonsai_archives.json`, owned by core storage utilities rather than hidden in `context_history.json` or UI-only task state. That sidecar stores both archive metadata and the archived conversation payload needed for later retrieve.
+
+## Architecture Split
+
+- **Side repo (`cline_context_bonsai`)**: pure-logic modules (guards, placeholder rendering, gauge severity bands, shared archive types) plus standalone mocha tests. Cline imports these through a `file:` dependency so the agent code does not re-implement them. Authoritative coding standards: `cline_context_bonsai/STANDARDS.md` (mirrors Cline's Biome + Mocha conventions).
+- **Agent repo (`cline`)**: canonical integration: `ContextBonsaiApplier`, native tool handlers, prompt-tool definitions, message-state / ContextManager extensions, proto updates, webview gauge surfaces, and the internal system-prompt guidance path. Authoritative coding standards: `cline/CLAUDE.md` plus `.clinerules/*.md`.
+- **Feature branch**: agent-repo commits on `feat/context-bonsai-port` inside `cline`; side-repo commits on `feat/context-bonsai-port` inside `cline_context_bonsai`. Parent submodule pointers are not advanced by this story.
 
 ## User Model
 
@@ -58,8 +66,22 @@ Archive state for v1 should live in a dedicated task-directory sidecar file, `co
 - `/home/basil/projects/context-bonsai-agents/cline/src/core/prompts/system-prompt/tools/init.ts` - tool prompt exposure and registration into the prompt spec
 - `/home/basil/projects/context-bonsai-agents/cline/src/integrations/checkpoints/index.ts` - canonical overwrite/reset precedent
 
-### New Files to Create
-- `/home/basil/projects/context-bonsai-agents/cline/src/core/task/ContextBonsaiApplier.ts` - centralized bonsai overwrite/reset helper
+### New Files to Create (side repo: `cline_context_bonsai/`)
+- `/home/basil/projects/context-bonsai-agents/cline_context_bonsai/package.json` - side-repo manifest with Mocha + Biome
+- `/home/basil/projects/context-bonsai-agents/cline_context_bonsai/tsconfig.json` - strict TS config
+- `/home/basil/projects/context-bonsai-agents/cline_context_bonsai/.mocharc.json` - test runner config mirroring Cline's
+- `/home/basil/projects/context-bonsai-agents/cline_context_bonsai/src/index.ts` - public API re-exports consumed by Cline via `file:` dep
+- `/home/basil/projects/context-bonsai-agents/cline_context_bonsai/src/guards.ts` - pattern resolution, boundary and same-step guards (pure)
+- `/home/basil/projects/context-bonsai-agents/cline_context_bonsai/src/placeholder.ts` - placeholder rendering (pure)
+- `/home/basil/projects/context-bonsai-agents/cline_context_bonsai/src/archive-types.ts` - shared archive metadata + archived-content payload types
+- `/home/basil/projects/context-bonsai-agents/cline_context_bonsai/src/gauge.ts` - gauge severity band logic (pure)
+- `/home/basil/projects/context-bonsai-agents/cline_context_bonsai/test/guards.test.ts` - guard-path coverage
+- `/home/basil/projects/context-bonsai-agents/cline_context_bonsai/test/placeholder.test.ts` - placeholder rendering
+- `/home/basil/projects/context-bonsai-agents/cline_context_bonsai/test/gauge.test.ts` - severity bands
+- `/home/basil/projects/context-bonsai-agents/cline_context_bonsai/docs/story.md` - pointer to parent story plan
+
+### New Files to Create (agent repo: `cline/`)
+- `/home/basil/projects/context-bonsai-agents/cline/src/core/task/ContextBonsaiApplier.ts` - canonical overwrite/reset helper; imports guards/placeholder/gauge/types from the side repo
 - `/home/basil/projects/context-bonsai-agents/cline/src/core/hooks/__tests__/precompact-executor.test.ts` - PreCompact payload/result tests
 - `/home/basil/projects/context-bonsai-agents/cline/src/core/task/tools/handlers/ContextBonsaiPruneHandler.ts` - native prune tool handler
 - `/home/basil/projects/context-bonsai-agents/cline/src/core/task/tools/handlers/ContextBonsaiRetrieveHandler.ts` - native retrieve tool handler
@@ -69,7 +91,8 @@ Archive state for v1 should live in a dedicated task-directory sidecar file, `co
 ### Runtime-Created Files
 - task-directory `context_bonsai_archives.json` - persisted archive records keyed by anchor id, containing range, summary, index terms, correlation data, and the archived conversation payload for retrieve
 
-### Files Modified
+### Files Modified (agent repo: `cline/`)
+- `/home/basil/projects/context-bonsai-agents/cline/package.json` - add `"cline-context-bonsai": "file:../cline_context_bonsai"`
 - `/home/basil/projects/context-bonsai-agents/cline/src/core/task/tools/handlers/SummarizeTaskHandler.ts`
 - `/home/basil/projects/context-bonsai-agents/cline/src/core/hooks/precompact-executor.ts`
 - `/home/basil/projects/context-bonsai-agents/cline/src/core/task/message-state.ts`
@@ -132,6 +155,8 @@ Archive state for v1 should live in a dedicated task-directory sidecar file, `co
 
 ## Validation Commands
 
+- `cd /home/basil/projects/context-bonsai-agents/cline_context_bonsai && npm test`
+- `cd /home/basil/projects/context-bonsai-agents/cline_context_bonsai && npm run typecheck`
 - `cd /home/basil/projects/context-bonsai-agents/cline && npm run protos`
 - `cd /home/basil/projects/context-bonsai-agents/cline && npm run check-types`
 - `cd /home/basil/projects/context-bonsai-agents/cline && npm run test:unit`
@@ -148,10 +173,10 @@ Archive state for v1 should live in a dedicated task-directory sidecar file, `co
 
 ## Plan Approval and Commit Status
 
-- Approval Status: `pending`
-- Approval Citation: `none`
-- Plan Commit Hash: `none`
-- Ready-for-Orchestration: `no`
+- Approval Status: `approved`
+- Approval Citation: `user message 2026-04-23: "All stories are approved."`
+- Plan Commit Hash: `pending-next-commit`
+- Ready-for-Orchestration: `yes`
 
 ## Validation Loop Results
 
