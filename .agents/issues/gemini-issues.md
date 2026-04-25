@@ -1,0 +1,62 @@
+# Gemini CLI Context Bonsai — Known Issues
+
+Source spec: `/home/basil/projects/context-bonsai-agents/docs/context-bonsai-agent-spec.md` (Pattern Matching Contract, current as of commit `9f1ca61`).
+Per-agent spec: `/home/basil/projects/context-bonsai-agents/docs/agent-specs/gemini-cli-context-bonsai-spec.md` (commit `4d87eb9`).
+v1 implementation pinned at parent commit `4b7d0c8` (gemini-cli_context_bonsai @ `db8d01d34`, gemini-cli @ `98ddc2843`).
+
+## Issue G1: snapshotTranscriptForResolution never reads tool-call structure (spec violation, MUST)
+
+**Currently understood:** `snapshotTranscriptForResolution` at `gemini-cli/packages/cli/src/utils/contextBonsaiBootstrap.ts:476-487` builds a `TranscriptMessage[]` with `searchText: flattenMessageText(m.content)`. `flattenMessageText` at `:521-535` walks only `.text` properties of `content`. Tool calls live in a separate `MessageRecord.toolCalls[]` field on `'gemini'`-typed messages and are never read; `functionResponse` parts in user content also have no `.text` and are silently dropped. Tool-call name, args, and result are all unsearchable. Violates Pattern Matching Contract bullet 1 (MUST).
+
+**Verification:** Yes. `snapshotTranscriptForResolution` only consults `m.content`; the separate `toolCalls?: ToolCallRecord[]` field on `'gemini'`-typed `MessageRecord` is never read, and `flattenMessageText` recurses only into `.text`, dropping `functionCall`/`functionResponse` parts and any nested response body. Tool-call name, args, and result are unsearchable.
+
+**Evidence:**
+- `gemini-cli/packages/cli/src/utils/contextBonsaiBootstrap.ts:476-487` — `snapshotTranscriptForResolution` maps `conversation.messages` to `{ id, role: m.type === 'gemini' ? 'assistant' : 'user', searchText: flattenMessageText(m.content) }`. No reference to `m.toolCalls`.
+- `contextBonsaiBootstrap.ts:521-535` — `flattenMessageText` returns the string itself, recurses arrays, and from objects only reads `o.text` (`if (typeof o.text === 'string') return o.text`). All other part shapes (including `functionCall`, `functionResponse`, `inlineData`) yield `''`.
+- `gemini-cli/packages/core/src/services/chatRecordingTypes.ts:31-74` — `BaseMessageRecord` has `content: PartListUnion`; `ConversationRecordExtra` adds `toolCalls?: ToolCallRecord[]` only on the `'gemini'` variant. `ToolCallRecord` (`:41-54`): `{ id; name: string; args: Record<string, unknown>; result?: PartListUnion | null; status; timestamp; agentId?; displayName?; description?; resultDisplay?; renderOutputAsMarkdown? }`. Tool result is in `result`, never as a `.text` part on `content`.
+- `@google/genai` `Part.functionResponse.response` is `Record<string, unknown>` (no `.text` field), so user-side `functionResponse` parts emitted by the response-converter contribute zero search text under current `flattenMessageText`.
+- Stored `ToolCallRecord.name`: `geminiChat.ts:1048` records `call.request.originalRequestName ?? call.request.name`. For a non-decomposed MCP tool, this is the registry-side name produced by `generateValidName` at `mcp-tool.ts:181-183` and `:591-602`: `mcp_${serverName}_${serverToolName}` with invalid chars replaced by `_`. With server `context-bonsai` and tool `context-bonsai-prune`, hyphens are preserved (allowed by the `[a-zA-Z0-9_\-.:]` charset), so `ToolCallRecord.name === "mcp_context-bonsai_context-bonsai-prune"`. `args` is the raw arg map (`originalRequestArgs ?? args`).
+- No supplemental path: `flattenMessageText` is only called from `snapshotTranscriptForResolution` (`contextBonsaiBootstrap.ts:37,485,521`); `contextBonsaiBootstrap.test.ts` (101 lines) covers MCP config and hook registration only — no snapshot/transcript assertions.
+
+**Implementer notes:**
+- Minimal fix in `snapshotTranscriptForResolution`: for each `MessageRecord` build `searchText` by joining (a) the existing content flatten, (b) for `m.type === 'gemini'` and each `tc` in `m.toolCalls ?? []` a stable line `tool:${tc.name}\nargs:${stableSerialize(tc.args)}\nresult:${flattenPartListForSearch(tc.result)}`, and (c) for user messages, parts containing `functionResponse` are flattened by appending `tool-response:${fr.name ?? ''}\n${stableSerialize(fr.response)}`. Concatenate with `\n`. Skip empty segments.
+- Extend `flattenMessageText` (or add `flattenPartListForSearch`) to handle: `Part.functionCall` (`name`, `args`), `Part.functionResponse` (`name`, `response`), and to recurse plain objects so nested text in MCP results is captured. Use `stableSerialize` for non-text payloads so output is deterministic.
+- Port `stableSerialize`/`normalizeForStableJson` from `opencode_context_bonsai_plugin/src/prune-pattern.ts:6-51` to TS at `gemini-cli_context_bonsai/src/stable-json.ts` (sorted keys, drops `undefined`/function/symbol, BigInt to string, honors `toJSON`, undefined array entries to `null`, top-level fallback `'null'`). Re-export from `gemini-cli_context_bonsai/src/index.ts`. Import in `contextBonsaiBootstrap.ts`.
+- MCP-prune name to expect: `mcp_context-bonsai_context-bonsai-prune` (verbatim — hyphens survive sanitization). Tests should match against this exact form.
+- Resolver-level fixtures in `gemini-cli_context_bonsai/test/guards.test.ts`: add cases proving `resolveBoundary` matches a `fromPattern`/`toPattern` substring that exists only inside the `tool:`/`args:`/`result:` segments (e.g. fixtures with `searchText` containing `tool:read_file\nargs:{"absolute_path":"/foo/bar.ts"}\nresult:...`). Existing `tmsg(id, text)` shorthand fixtures stay valid because they pass `searchText` directly.
+- Bootstrap-level fixtures in `gemini-cli/packages/cli/src/utils/contextBonsaiBootstrap.test.ts` (currently no snapshot coverage): export `snapshotTranscriptForResolution` for testing or add a thin internal export. Cases: (1) `'gemini'` message with `toolCalls: [{ name: 'read_file', args: { absolute_path: '/x' }, result: [{ text: 'content' }] }]` produces `searchText` containing `tool:read_file`, `"absolute_path":"/x"`, and `content`; (2) MCP tool call with `name: 'mcp_context-bonsai_context-bonsai-prune'` is searchable by that exact string; (3) user `functionResponse` part with body `{ output: 'err: bad pattern' }` is searchable by `bad pattern`; (4) `result === null` and `result === undefined` produce no crash and empty result segment; (5) key-order independence — two `args` objects with same keys in different order produce identical `searchText`.
+- Side-effects: existing 101-line `contextBonsaiBootstrap.test.ts` has no transcript-shape assertions, so safe. Side-repo `guards.test.ts` uses `tmsg` shorthand (`searchText` passed directly) — unaffected. No e2e/integration test asserts `searchText` shape.
+- **G1↔G2 coupling:** once tool-call args are in `searchText`, a failed `mcp_context-bonsai_context-bonsai-prune` invocation and its echoed `fromPattern`/`toPattern` args become matchable corpus — a retry with the same pattern would self-match the previous failure record. The prune-wrapper filter from spec commit `cb61f00` must drop `ToolCallRecord`s whose `name === 'mcp_context-bonsai_context-bonsai-prune'` from the search corpus before pattern resolution. Wire that filter at the same layer where this fix lands.
+
+## Issue G2: prune-wrapper filter not implemented (spec violation, MUST)
+
+**Currently understood:** The cross-agent spec (commit `cb61f00`) requires that on ambiguous matches, the resolver MUST exclude messages whose canonical content is a prior `context-bonsai-prune` tool-use wrapper. `gemini-cli_context_bonsai/src/guards.ts` `resolveBoundary` (around lines 95-135, ambiguity branches at `:114-120` and `:128-135`) does not implement this. Today the bug is masked by G1 (tool-call structure is invisible to the resolver), but once G1 is remediated, the wrapper filter becomes load-bearing.
+
+**Verification:** Yes. `resolveBoundary` in `gemini-cli_context_bonsai/src/guards.ts` has zero wrapper-filter logic on either ambiguity branch. `TranscriptMessage` (lines 18-32) has no wrapper-related field. `snapshotTranscriptForResolution` (`gemini-cli/packages/cli/src/utils/contextBonsaiBootstrap.ts:476-487`) does no caller-side filtering — it only flattens text from `m.content`.
+
+**Evidence:**
+- `guards.ts:114-120` (from_pattern ambiguity branch, verbatim):
+  ```ts
+  if (fromMatches.length > 1) {
+    return {
+      ok: false,
+      error:
+        `from_pattern is ambiguous (matched ${fromMatches.length} messages). ` +
+        'Refine the pattern to uniquely identify one message.',
+    };
+  }
+  ```
+- `guards.ts:128-135` (to_pattern ambiguity branch, verbatim): same shape, returns immediately on `toMatches.length > 1`.
+- `TranscriptMessage` interface (`guards.ts:18-32`) declares only `id`, `role`, `searchText`, optional `inPrunedRange`, `isIncompleteToolCall`, `stepId`. No wrapper signal.
+- `snapshotTranscriptForResolution` (`contextBonsaiBootstrap.ts:482-486`) maps each conversation message to `{ id, role, searchText: flattenMessageText(m.content) }` only. No `toolCalls` extraction, no wrapper detection.
+- MCP-prefixed prune tool name is `mcp_context-bonsai_context-bonsai-prune` (single underscores between `mcp`, server, tool; hyphens preserved). Confirmed via `mcp-tool.ts:30` (`MCP_QUALIFIED_NAME_SEPARATOR = '_'`), `:181-182` (constructs `${serverName}_${serverToolName}`), and `:591-597` `generateValidName` which prepends `mcp_` and replaces only chars not in `[a-zA-Z0-9_\-.:]` (so `-` survives).
+- No MCP tool decomposition exists in Gemini — `grep` for `decompos|DecomposedTool|isDecomposable` across `packages/core/src/tools/` returned zero hits. Single canonical name applies.
+- No native non-MCP prune tool: only the MCP server registration exists (`contextBonsaiBootstrap.ts:124,322,342,357,462` reference the bare `context-bonsai-prune` matcher for the BeforeTool hook, not a host-registered tool).
+
+**Implementer notes:**
+- Side-repo (`gemini-cli_context_bonsai/src/guards.ts`): add optional `readonly isPruneWrapper?: boolean` to `TranscriptMessage` (after `isIncompleteToolCall`, doc-comment: "true if this message is a prior `context-bonsai-prune` tool-use wrapper; resolver MUST exclude these from ambiguous match counts").
+- Side-repo: export predicate `export function isPruneToolWrapperRecord(record: { toolCalls?: readonly ToolCallRecord[] }): boolean` returning `true` iff any `tc.name === 'mcp_context-bonsai_context-bonsai-prune'`. Define `ToolCallRecord` as `{ readonly name: string }` (minimal; G1 may extend). Since Gemini does not decompose MCP tools, only the canonical FQN is needed — no post-decomposition alias.
+- Resolver fix in `resolveBoundary`: in BOTH ambiguity branches (`:114-120` and `:128-135`), before returning the error, filter out wrapper indices: `const filtered = fromMatches.filter(i => !transcript[i]?.isPruneWrapper);` and if `filtered.length === 1`, treat it as the resolved match (replace the singleton-match path); if still `> 1`, return the existing ambiguity error; if `0`, return the existing not-found error. Apply identically to `toMatches`. The two branches MUST be modified symmetrically since `from_pattern` and `to_pattern` resolve independently.
+- Agent-repo: extend `snapshotTranscriptForResolution` (`contextBonsaiBootstrap.ts:476-487`) to extract `toolCalls` from `m.content` (Gemini conversation messages carry tool-use parts in `content`), pass through `isPruneToolWrapperRecord`, and populate `isPruneWrapper` on the returned `TranscriptMessage`. This requires the same content-shape work as G1; the extraction can be shared.
+- Required outcome tests (side-repo, in `guards.test.ts` or equivalent): four resolver tests (a) from_pattern ambiguous between wrapper + real msg → resolves to real msg; (b) to_pattern ambiguous between wrapper + real msg → resolves to real msg; (c) from_pattern ambiguous between two real msgs → still errors; (d) to_pattern ambiguous between two real msgs → still errors. Plus predicate tests at side layer (wrapper name match true; non-prune tool false; empty toolCalls false; missing toolCalls false) and at agent layer (snapshot populates `isPruneWrapper` correctly for a synthesized message containing a `mcp_context-bonsai_context-bonsai-prune` tool-use part).
+- **G1↔G2 coupling:** This fix is inert until G1 lands — without tool-call structure in `searchText` or a parallel `toolCalls` field on the snapshot, the agent-repo cannot detect wrappers to set `isPruneWrapper`. G1 and G2 MUST land in the same change set; ship them as a single PR.
