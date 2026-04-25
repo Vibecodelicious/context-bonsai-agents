@@ -64,6 +64,7 @@ Gemini CLI is the strongest non-OpenCode host in this workspace for a hook-led b
 - `context-bonsai-prune` and `context-bonsai-retrieve` SHOULD be surfaced through the native tool registry, either directly or through extension/MCP registration.
 - Archive metadata SHOULD persist in a host-owned durable store correlated with session chat records.
 - Per shared spec Pattern Matching Contract, the prune-wrapper filter on the ambiguity path MUST be implemented inside the side-repo pattern resolver in `gemini-cli_context_bonsai/src/guards.ts` (`resolveBoundary`), operating on the agent-side transcript snapshot the bootstrap obtains from `chatRecordingService` before the MCP tool is invoked.
+- Per shared spec Pattern Matching Contract, `snapshotTranscriptForResolution` in `gemini-cli/packages/cli/src/utils/contextBonsaiBootstrap.ts` MUST include each tool call's name, args, and result/output in the `searchText` it produces for each `TranscriptMessage`. The v1 implementation reads only `MessageRecord.content` through `flattenMessageText` (which walks `.text` properties only) and never touches `MessageRecord.toolCalls[]` or `functionResponse` parts — that is a spec violation. The snapshot builder MUST also serialize `toolCalls[].name`, `toolCalls[].args`, and `toolCalls[].result` (when present) into the searchable text, plus extract content from `functionResponse` parts in user messages.
 
 ### Transcript mutation path
 

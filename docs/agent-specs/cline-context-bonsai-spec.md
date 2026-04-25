@@ -67,6 +67,7 @@ Cline has real hook infrastructure, but the authoritative history, truncation, a
 - Retrieval MUST restore visibility in the same history layer used for actual request construction.
 - The narrowest implementation path is to extend the existing message-state/checkpoint/context-manager overwrite flow rather than inventing a separate transcript store.
 - Per shared spec Pattern Matching Contract, the prune-wrapper filter on the ambiguity path MUST be implemented inside the side-repo pattern resolver in `cline_context_bonsai/src/guards.ts`, operating on the conversation-history snapshot the applier feeds into pattern resolution.
+- Per shared spec Pattern Matching Contract, `extractMessageText` in `cline/src/core/task/ContextBonsaiApplier.ts` MUST include each `tool_use` block's name AND a stable representation of its `input` arguments in the searchable text. The v1 implementation renders `tool_use` as `[tool_use:${name}]` and drops `input` entirely; that is a spec violation. `tool_result` block extraction (which already includes inner text) is compliant for the output side.
 
 ### Transcript mutation path
 

@@ -239,7 +239,7 @@ Protected anchors may be pruned only when an implementation intentionally suppor
 
 Pattern-based boundary resolution is part of the behavioral contract.
 
-- Matching SHOULD operate on message text and stable representations of completed tool-call input and output.
+- Matching MUST operate on message text and stable representations of every completed tool-call's name, input, and output. The host's text-extraction layer feeding the resolver MUST include all three for any searchable message that carries tool-call structure. Pattern resolution that cannot reach tool-call name, input, or output is a spec violation regardless of whether the omission is by oversight, performance optimization, or content-shape coupling.
 - Synthetic transform-added content that exists only to support rendering SHOULD generally be excluded from matching.
 - Ambiguous pattern matches MUST fail deterministically.
 - On ambiguous pattern matches, before returning the deterministic failure, the implementation MUST exclude from the candidate set any message whose canonical content is a prior `context-bonsai-prune` tool-use wrapper. If exactly one non-wrapper candidate remains, that is the resolved boundary; otherwise the failure is returned. Without this filter, retry sequences after a first-attempt ambiguity error self-poison — the failed call's echoed `from_pattern` / `to_pattern` / `summary` text matches the retry pattern alongside the real target.

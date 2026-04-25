@@ -63,6 +63,7 @@ Kilo is the strongest native-fit host in this workspace because it already expos
 - The model-facing tools MUST remain `context-bonsai-prune` and `context-bonsai-retrieve`.
 - Archive state SHOULD be implemented in the same style as the OpenCode reference unless Kilo session differences require a narrow adaptation.
 - Per shared spec Pattern Matching Contract, the prune-wrapper filter on the ambiguity path MUST be implemented inside the plugin's pattern resolver in `kilo_context_bonsai/src/guards.ts` (or the side-repo equivalent), operating on the message-transform input the plugin already receives.
+- Per shared spec Pattern Matching Contract, the side-repo text-extraction layer (currently `getText` in `kilo_context_bonsai/src/factory.ts`) MUST include each tool part's name, input arguments, and completed output in the searchable text it produces for `MessageText`. Skipping non-text parts, as the v1 implementation does, is a spec violation. Tool-call messages MUST be reachable by pattern.
 
 ### Transcript mutation path
 

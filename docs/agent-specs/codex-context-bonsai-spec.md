@@ -68,6 +68,7 @@ Codex has durable thread state, usage tracking, tools, hooks, and app-server sur
 - Tool definitions SHOULD live in the existing tool registry.
 - Tool execution SHOULD delegate to a minimal core capability that installs a new replacement-history snapshot for the live thread and persists the corresponding rollout item.
 - Per shared spec Pattern Matching Contract, the prune-wrapper filter on the ambiguity path MUST be implemented inside the side crate's pattern resolver in `codex_context_bonsai/src/guards.rs`, operating on the projected `MessageForMatching` slice produced by `project_message_for_matching`.
+- Per shared spec Pattern Matching Contract, `project_message_for_matching` (in `codex/codex-rs/core/src/context_bonsai.rs`) MUST emit non-empty searchable text for every `ResponseItem` variant that represents a completed tool call or tool-call output the model can see. The v1 implementation extracts only `FunctionCall.arguments` and `CustomToolCall.input`, returning empty string for `FunctionCallOutput`, `CustomToolCallOutput`, `ToolSearchCall`/`Output`, `LocalShellCall`, `WebSearchCall`, `ImageGenerationCall`, and other variants — that is a spec violation. The projection MUST include the tool-call name AND output for each variant, in addition to the input.
 
 ### Transcript mutation path
 
