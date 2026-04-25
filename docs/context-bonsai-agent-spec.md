@@ -242,6 +242,7 @@ Pattern-based boundary resolution is part of the behavioral contract.
 - Matching SHOULD operate on message text and stable representations of completed tool-call input and output.
 - Synthetic transform-added content that exists only to support rendering SHOULD generally be excluded from matching.
 - Ambiguous pattern matches MUST fail deterministically.
+- On ambiguous pattern matches, before returning the deterministic failure, the implementation MUST exclude from the candidate set any message whose canonical content is a prior `context-bonsai-prune` tool-use wrapper. If exactly one non-wrapper candidate remains, that is the resolved boundary; otherwise the failure is returned. Without this filter, retry sequences after a first-attempt ambiguity error self-poison — the failed call's echoed `from_pattern` / `to_pattern` / `summary` text matches the retry pattern alongside the real target.
 - The implementation MAY use host-specific tie-break behavior if it is deterministic and documented.
 
 ## Runtime Capability Matrix
