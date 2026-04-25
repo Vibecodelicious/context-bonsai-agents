@@ -67,6 +67,7 @@ Codex has durable thread state, usage tracking, tools, hooks, and app-server sur
 - The target model-facing contract is still `context-bonsai-prune` and `context-bonsai-retrieve`.
 - Tool definitions SHOULD live in the existing tool registry.
 - Tool execution SHOULD delegate to a minimal core capability that installs a new replacement-history snapshot for the live thread and persists the corresponding rollout item.
+- Per shared spec Pattern Matching Contract, the prune-wrapper filter on the ambiguity path MUST be implemented inside the side crate's pattern resolver in `codex_context_bonsai/src/guards.rs`, operating on the projected `MessageForMatching` slice produced by `project_message_for_matching`.
 
 ### Transcript mutation path
 

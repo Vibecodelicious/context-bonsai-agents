@@ -62,6 +62,7 @@ Kilo is the strongest native-fit host in this workspace because it already expos
 
 - The model-facing tools MUST remain `context-bonsai-prune` and `context-bonsai-retrieve`.
 - Archive state SHOULD be implemented in the same style as the OpenCode reference unless Kilo session differences require a narrow adaptation.
+- Per shared spec Pattern Matching Contract, the prune-wrapper filter on the ambiguity path MUST be implemented inside the plugin's pattern resolver in `kilo_context_bonsai/src/guards.ts` (or the side-repo equivalent), operating on the message-transform input the plugin already receives.
 
 ### Transcript mutation path
 

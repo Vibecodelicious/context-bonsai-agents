@@ -66,6 +66,7 @@ Cline has real hook infrastructure, but the authoritative history, truncation, a
 - Archive metadata SHOULD be stored alongside or in a structure directly correlated with API conversation history.
 - Retrieval MUST restore visibility in the same history layer used for actual request construction.
 - The narrowest implementation path is to extend the existing message-state/checkpoint/context-manager overwrite flow rather than inventing a separate transcript store.
+- Per shared spec Pattern Matching Contract, the prune-wrapper filter on the ambiguity path MUST be implemented inside the side-repo pattern resolver in `cline_context_bonsai/src/guards.ts`, operating on the conversation-history snapshot the applier feeds into pattern resolution.
 
 ### Transcript mutation path
 
