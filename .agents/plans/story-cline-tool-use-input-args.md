@@ -98,8 +98,8 @@ Side-repo `mocha` + `should.js` for `stable-json.ts` (matches existing `cline_co
 
 - Approval Status: llm-agent-approved
 - Approval Citation: validation loop iteration 2 cleared all findings (testing-framework wording corrected from vitest→mocha to match actual repo convention; null/undefined input behavior added to ACs).
-- Plan Commit Hash: pending-next-commit
-- Ready-for-Orchestration: yes (after this plan is committed and the Plan Commit Hash field is updated)
+- Plan Commit Hash: b243a03
+- Ready-for-Orchestration: yes
 
 ## Validation Loop Results
 

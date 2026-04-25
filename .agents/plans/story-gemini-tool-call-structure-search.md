@@ -112,8 +112,8 @@ Side-repo vitest for `stable-json.ts`. Agent-repo vitest for `snapshotTranscript
 
 - Approval Status: llm-agent-approved
 - Approval Citation: validation loop iteration 2 cleared all findings (typecheck command corrected to `--workspace @google/gemini-cli`; `flattenMessageText` resolved to delete; helper colocation locked in `contextBonsaiBootstrap.ts`; "no recursion" rule for unknown object types committed; `stableSerialize` import path made explicit; side-repo rebuild step added).
-- Plan Commit Hash: pending-next-commit
-- Ready-for-Orchestration: yes (after this plan is committed and the Plan Commit Hash field is updated)
+- Plan Commit Hash: b243a03
+- Ready-for-Orchestration: yes
 
 ## Validation Loop Results
 

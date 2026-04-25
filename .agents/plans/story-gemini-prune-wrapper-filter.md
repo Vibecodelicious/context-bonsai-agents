@@ -107,8 +107,8 @@ Side-repo vitest for resolver outcomes (both `from` and `to` sides) + predicate.
 
 - Approval Status: llm-agent-approved
 - Approval Citation: validation loop iteration 1 found no blocking gaps (`ToolCallRecord` minimal-shape passes structural typing; both ambiguity branches return `number[]` indexable by `transcript[i]`; single-match and zero-match paths confirmed untouched; cite ranges verified accurate).
-- Plan Commit Hash: pending-next-commit
-- Ready-for-Orchestration: yes (after this plan is committed and the Plan Commit Hash field is updated)
+- Plan Commit Hash: b243a03
+- Ready-for-Orchestration: yes
 
 ## Validation Loop Results
 

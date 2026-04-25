@@ -115,8 +115,8 @@ Side-crate `cargo test` for resolver outcomes + predicate. Agent-repo `cargo tes
 
 - Approval Status: llm-agent-approved
 - Approval Citation: validation loop iteration 2 cleared all findings (predicate location locked to agent repo because side crate is intentionally host-neutral per `archive.rs:9-12` design; `Match` is `Clone` confirmed; `is_prune_wrapper` field-name collision-free; projector populator inlined).
-- Plan Commit Hash: pending-next-commit
-- Ready-for-Orchestration: yes (after this plan is committed and the Plan Commit Hash field is updated)
+- Plan Commit Hash: b243a03
+- Ready-for-Orchestration: yes
 
 ## Validation Loop Results
 

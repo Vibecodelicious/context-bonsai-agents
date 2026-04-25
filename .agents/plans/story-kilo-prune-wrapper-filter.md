@@ -105,8 +105,8 @@ Side-repo `bun:test` only. Resolver tests use hand-built `MessageText[]` with `i
 
 - Approval Status: llm-agent-approved
 - Approval Citation: validation loop iteration 2 cleared all findings (resolved the `factory.ts` vs `index.ts` alternative; pinned predicate location with rationale; cross-referenced K1 AC for the `error`-status decision; ensured K1 `toolMsg()` helper reuse).
-- Plan Commit Hash: pending-next-commit
-- Ready-for-Orchestration: yes (after this plan is committed and the Plan Commit Hash field is updated)
+- Plan Commit Hash: b243a03
+- Ready-for-Orchestration: yes
 
 ## Validation Loop Results
 

@@ -108,8 +108,8 @@ Side-repo mocha + should.js for the resolver and predicate. The predicate is exe
 
 - Approval Status: llm-agent-approved
 - Approval Citation: validation loop iteration 2 cleared all findings (resolved predicate-location ambiguity to `content.ts`; resolved test-file ambiguity to `content.test.ts`; tightened callsite citations to `:203`/`:205`).
-- Plan Commit Hash: pending-next-commit
-- Ready-for-Orchestration: yes (after this plan is committed and the Plan Commit Hash field is updated)
+- Plan Commit Hash: b243a03
+- Ready-for-Orchestration: yes
 
 ## Validation Loop Results
 

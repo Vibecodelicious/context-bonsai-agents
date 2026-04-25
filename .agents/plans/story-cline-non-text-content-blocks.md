@@ -105,8 +105,8 @@ Agent-repo mocha + should.js (matches existing `ContextBonsaiApplier.test.ts` co
 
 - Approval Status: llm-agent-approved
 - Approval Citation: validation loop iteration 2 cleared all findings (SDK field-name verification: image source has no `url` variant in pinned SDK; document source has no `url` variant; both URL branches dropped from ACs with forward-compat notes; C3 dependency clarified as orchestrator-enforced).
-- Plan Commit Hash: pending-next-commit
-- Ready-for-Orchestration: yes (after this plan is committed and the Plan Commit Hash field is updated)
+- Plan Commit Hash: b243a03
+- Ready-for-Orchestration: yes
 
 ## Validation Loop Results
 
