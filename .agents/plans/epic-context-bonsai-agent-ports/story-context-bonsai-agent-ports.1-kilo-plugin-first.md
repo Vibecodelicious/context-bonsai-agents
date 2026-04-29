@@ -29,8 +29,8 @@ The implementation should target full bonsai parity:
 ## Architecture Split
 
 - **Side repo (`kilo_context_bonsai`)**: plugin source, guards, archive store, gauge, placeholder, all tests that do not require the Kilo runtime. Authoritative coding standards: `kilo_context_bonsai/STANDARDS.md`.
-- **Agent repo (`context-bonsai-kilo/kilocode`)**: `.opencode/opencode.jsonc` plugin entry, the gauge-telemetry hook-input seam in shared OpenCode files (each touched file marked with `kilocode_change` per `AGENTS.md`), and a single seam integration test. Authoritative coding standards: `kilocode/AGENTS.md`.
-- **Feature branch**: all agent-repo commits land on `feat/context-bonsai-port` inside the `context-bonsai-kilo/kilocode` submodule; side-repo commits land on `feat/context-bonsai-port` inside `kilo_context_bonsai`. The parent planning repo's submodule pointers are not advanced by this story.
+- **Agent repo (`kilo`)**: `.opencode/opencode.jsonc` plugin entry, the gauge-telemetry hook-input seam in shared OpenCode files (each touched file marked with `kilocode_change` per `AGENTS.md`), and a single seam integration test. Authoritative coding standards: `kilocode/AGENTS.md`.
+- **Feature branch**: all agent-repo commits land on `feat/context-bonsai-port` inside the `kilo` submodule; side-repo commits land on `feat/context-bonsai-port` inside `kilo_context_bonsai`. The parent planning repo's submodule pointers are not advanced by this story.
 
 ## User Model
 
@@ -65,14 +65,14 @@ The implementation should target full bonsai parity:
 ## Context References
 
 ### Relevant Codebase Files (must read)
-- `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/plugin/src/index.ts` - plugin hook and tool contract
-- `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/src/session/prompt.ts` - message transform application point
-- `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/src/session/llm.ts` - system transform application point
-- `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/src/session/compaction.ts` - existing compaction flow
-- `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/src/session/message-v2.ts` - message info shape including `sessionID`
-- `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/src/session/overflow.ts` - usable-budget logic for gauge data
-- `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/src/tool/registry.ts` - tool registration and execution path
-- `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/AGENTS.md` - upstream-minimization and Kilo-marking rules
+- `/home/basil/projects/context-bonsai-agents/kilo/packages/plugin/src/index.ts` - plugin hook and tool contract
+- `/home/basil/projects/context-bonsai-agents/kilo/packages/opencode/src/session/prompt.ts` - message transform application point
+- `/home/basil/projects/context-bonsai-agents/kilo/packages/opencode/src/session/llm.ts` - system transform application point
+- `/home/basil/projects/context-bonsai-agents/kilo/packages/opencode/src/session/compaction.ts` - existing compaction flow
+- `/home/basil/projects/context-bonsai-agents/kilo/packages/opencode/src/session/message-v2.ts` - message info shape including `sessionID`
+- `/home/basil/projects/context-bonsai-agents/kilo/packages/opencode/src/session/overflow.ts` - usable-budget logic for gauge data
+- `/home/basil/projects/context-bonsai-agents/kilo/packages/opencode/src/tool/registry.ts` - tool registration and execution path
+- `/home/basil/projects/context-bonsai-agents/kilo/AGENTS.md` - upstream-minimization and Kilo-marking rules
 
 ### New Files to Create (side repo: `kilo_context_bonsai/`)
 - `/home/basil/projects/context-bonsai-agents/kilo_context_bonsai/package.json` - side-repo package manifest, `bun:test` dev dep, oxlint config reference
@@ -87,19 +87,19 @@ The implementation should target full bonsai parity:
 - `/home/basil/projects/context-bonsai-agents/kilo_context_bonsai/test/gauge.test.ts` - gauge band coverage
 - `/home/basil/projects/context-bonsai-agents/kilo_context_bonsai/docs/story.md` - pointer to parent story plan
 
-### New Files to Create (agent repo: `context-bonsai-kilo/kilocode/`)
-- `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/test/kilocode/context-bonsai.test.ts` - seam integration test confirming gauge telemetry reaches the plugin
+### New Files to Create (agent repo: `kilo/`)
+- `/home/basil/projects/context-bonsai-agents/kilo/packages/opencode/test/kilocode/context-bonsai.test.ts` - seam integration test confirming gauge telemetry reaches the plugin
 
 ### Runtime-Created Files
 - `.opencode/context-bonsai/<session-id>.json` inside the worktree where Kilo runs - plugin-managed archive metadata store
 
-### Files Modified (agent repo: `context-bonsai-kilo/kilocode/`)
-- `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/.opencode/opencode.jsonc` - add a `plugin` entry pointing at the side-repo artifact. Kilo resolves plugin specs relative to the config file's directory (`kilocode/.opencode/`), so the correct relative path up to the planning repo root is THREE parent segments: `../../../kilo_context_bonsai/src/plugin.ts`. Validate the resolved path exists as part of the seam test.
-- `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/plugin/src/index.ts` - extend `experimental.chat.messages.transform` input shape with optional gauge telemetry fields (`kilocode_change`)
-- `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/src/session/llm.ts` - extend `experimental.chat.system.transform` input with the same optional gauge telemetry fields (`kilocode_change`)
-- `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/src/agent/agent.ts` - extend the second `experimental.chat.system.transform` callsite with the same optional telemetry fields (`kilocode_change`)
-- `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/src/session/prompt.ts` - pass gauge telemetry into plugin message-transform input (`kilocode_change`)
-- `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/src/session/compaction.ts` - keep compaction-time transform invocation aligned with the same input shape (`kilocode_change`)
+### Files Modified (agent repo: `kilo/`)
+- `/home/basil/projects/context-bonsai-agents/kilo/.opencode/opencode.jsonc` - add a `plugin` entry pointing at the side-repo artifact. Kilo resolves plugin specs relative to the config file's directory (`kilocode/.opencode/`), so the correct relative path up to the planning repo root is THREE parent segments: `../../../kilo_context_bonsai/src/plugin.ts`. Validate the resolved path exists as part of the seam test.
+- `/home/basil/projects/context-bonsai-agents/kilo/packages/plugin/src/index.ts` - extend `experimental.chat.messages.transform` input shape with optional gauge telemetry fields (`kilocode_change`)
+- `/home/basil/projects/context-bonsai-agents/kilo/packages/opencode/src/session/llm.ts` - extend `experimental.chat.system.transform` input with the same optional gauge telemetry fields (`kilocode_change`)
+- `/home/basil/projects/context-bonsai-agents/kilo/packages/opencode/src/agent/agent.ts` - extend the second `experimental.chat.system.transform` callsite with the same optional telemetry fields (`kilocode_change`)
+- `/home/basil/projects/context-bonsai-agents/kilo/packages/opencode/src/session/prompt.ts` - pass gauge telemetry into plugin message-transform input (`kilocode_change`)
+- `/home/basil/projects/context-bonsai-agents/kilo/packages/opencode/src/session/compaction.ts` - keep compaction-time transform invocation aligned with the same input shape (`kilocode_change`)
 
 ### Relevant Documentation
 - [kilo-context-bonsai-spec.md](/home/basil/projects/context-bonsai-agents/docs/agent-specs/kilo-context-bonsai-spec.md)
@@ -151,14 +151,14 @@ The implementation should target full bonsai parity:
 
 - `cd /home/basil/projects/context-bonsai-agents/kilo_context_bonsai && bun test`
 - `cd /home/basil/projects/context-bonsai-agents/kilo_context_bonsai && bun run typecheck` (if tsconfig/typecheck script is defined)
-- `cd /home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode && bun run --cwd packages/opencode test test/kilocode/context-bonsai.test.ts`
-- `cd /home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode && bun run --cwd packages/opencode typecheck`
-- `cd /home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode && bun turbo typecheck`
+- `cd /home/basil/projects/context-bonsai-agents/kilo && bun run --cwd packages/opencode test test/kilocode/context-bonsai.test.ts`
+- `cd /home/basil/projects/context-bonsai-agents/kilo && bun run --cwd packages/opencode typecheck`
+- `cd /home/basil/projects/context-bonsai-agents/kilo && bun turbo typecheck`
 
 ## Worktree Artifact Check
 
 - Checked At: `2026-04-23`
-- Planned Target Files: `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/.opencode/plugins/context-bonsai.ts`, `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/test/kilocode/context-bonsai.test.ts`, `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/.opencode/opencode.jsonc`, `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/plugin/src/index.ts`, `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/src/session/llm.ts`, `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/src/session/prompt.ts`, `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/src/session/compaction.ts`
+- Planned Target Files: `/home/basil/projects/context-bonsai-agents/kilo/.opencode/plugins/context-bonsai.ts`, `/home/basil/projects/context-bonsai-agents/kilo/packages/opencode/test/kilocode/context-bonsai.test.ts`, `/home/basil/projects/context-bonsai-agents/kilo/.opencode/opencode.jsonc`, `/home/basil/projects/context-bonsai-agents/kilo/packages/plugin/src/index.ts`, `/home/basil/projects/context-bonsai-agents/kilo/packages/opencode/src/session/llm.ts`, `/home/basil/projects/context-bonsai-agents/kilo/packages/opencode/src/session/prompt.ts`, `/home/basil/projects/context-bonsai-agents/kilo/packages/opencode/src/session/compaction.ts`
 - Overlaps Found: `none`
 - Escalation Status: `none`
 - Decision Citation: `none`

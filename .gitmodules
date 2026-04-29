@@ -7,8 +7,8 @@
 [submodule "gemini-cli"]
 	path = gemini-cli
 	url = git@github.com:google-gemini/gemini-cli.git
-[submodule "context-bonsai-kilo/kilocode"]
-	path = context-bonsai-kilo/kilocode
+[submodule "kilo"]
+	path = kilo
 	url = git@github.com:Kilo-Org/kilocode.git
 [submodule "kilo_context_bonsai"]
 	path = kilo_context_bonsai

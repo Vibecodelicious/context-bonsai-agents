@@ -44,9 +44,9 @@ M1 and M2 are real correctness issues but proportionate in scope and straightfor
 ### Finding-by-Finding Evaluation
 
 #### [C1] Plugin path in `.opencode/opencode.jsonc` resolves to a nonexistent file
-- **Reviewer's Issue**: `plugin` entry uses `../../kilo_context_bonsai/src/plugin.ts`; resolves to `context-bonsai-kilo/kilo_context_bonsai/src/plugin.ts` which doesn't exist.
+- **Reviewer's Issue**: `plugin` entry uses `../../kilo_context_bonsai/src/plugin.ts`; resolves to `kilo/kilo_context_bonsai/src/plugin.ts` which doesn't exist.
 - **Verdict**: APPROVED (must fix)
-- **Reasoning**: Verified against `packages/opencode/src/config/plugin.ts:50-65`: `resolvePluginSpec` uses `path.resolve(path.dirname(configFilepath), spec)`. The config at `context-bonsai-kilo/kilocode/.opencode/opencode.jsonc` resolves `../../kilo_context_bonsai/src/plugin.ts` to `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilo_context_bonsai/src/plugin.ts`. `ls` confirms: "No such file or directory". The real side-repo is one directory higher, at `/home/basil/projects/context-bonsai-agents/kilo_context_bonsai/`. The correct spec is `../../../kilo_context_bonsai/src/plugin.ts` (3 levels up, not 2). The plan itself carries the same typo, so it propagated in unchecked.
+- **Reasoning**: Verified against `packages/opencode/src/config/plugin.ts:50-65`: `resolvePluginSpec` uses `path.resolve(path.dirname(configFilepath), spec)`. The config at `kilo/.opencode/opencode.jsonc` resolves `../../kilo_context_bonsai/src/plugin.ts` to `/home/basil/projects/context-bonsai-agents/kilo/kilo_context_bonsai/src/plugin.ts`. `ls` confirms: "No such file or directory". The real side-repo is one directory higher, at `/home/basil/projects/context-bonsai-agents/kilo_context_bonsai/`. The correct spec is `../../../kilo_context_bonsai/src/plugin.ts` (3 levels up, not 2). The plan itself carries the same typo, so it propagated in unchecked.
 - **If Approved**: Change `.opencode/opencode.jsonc` plugin entry to `../../../kilo_context_bonsai/src/plugin.ts`. Also correct the plan's description in the story file to match. Add a regression guard (see H1) that asserts the configured plugin spec resolves to an existing, loadable file.
 
 #### [C2] Plugin entry exports internal helpers that collide with Kilo's legacy-plugin loader
@@ -107,7 +107,7 @@ M1 and M2 are real correctness issues but proportionate in scope and straightfor
 
 **NEEDS REVISION.** The developer should address these approved items:
 
-1. **C1** — fix the plugin path in `context-bonsai-kilo/kilocode/.opencode/opencode.jsonc` to `../../../kilo_context_bonsai/src/plugin.ts` (3 levels up). Also fix the identical typo in the plan file's AC reference ("`../../kilo_context_bonsai/...`"). Mark the fix with the existing `kilocode_change start/end` pair.
+1. **C1** — fix the plugin path in `kilo/.opencode/opencode.jsonc` to `../../../kilo_context_bonsai/src/plugin.ts` (3 levels up). Also fix the identical typo in the plan file's AC reference ("`../../kilo_context_bonsai/...`"). Mark the fix with the existing `kilocode_change start/end` pair.
 2. **C2** — remove `createPlugin`, `createSessions`, `resolveSessionID` from the public module surface of `kilo_context_bonsai/src/plugin.ts`. Preferred path: split factory/testing helpers into `kilo_context_bonsai/src/factory.ts` (or `internal.ts`) and have plugin.ts import from there and default-export only. Alternative: migrate plugin.ts to the v1 PluginModule shape (`export default { id: "context-bonsai", server: createPlugin() }`) which takes the strict loader path.
 3. **H1** — replace or extend the seam integration test so it resolves the configured plugin spec against the real config file, imports it, and asserts the expected tools + hooks are registered. This becomes the standing regression guard for C1 and C2. Type-only structural probes do not satisfy AC #7.
 4. **M1** — thread `reserved: cfg.compaction?.reserved` into the `overflowTelemetry(...)` callsite in `prompt.ts`.

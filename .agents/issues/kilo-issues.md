@@ -2,7 +2,7 @@
 
 Source spec: `/home/basil/projects/context-bonsai-agents/docs/context-bonsai-agent-spec.md` (Pattern Matching Contract, current as of commit `9f1ca61`).
 Per-agent spec: `/home/basil/projects/context-bonsai-agents/docs/agent-specs/kilo-context-bonsai-spec.md` (commit `4d87eb9`).
-v1 implementation pinned at parent commit `4b7d0c8` (kilo_context_bonsai @ `00fe03555`, context-bonsai-kilo/kilocode @ `ab8ca53e9`).
+v1 implementation pinned at parent commit `4b7d0c8` (kilo_context_bonsai @ `00fe03555`, kilo @ `ab8ca53e9`).
 
 ## Issue K1: text extraction skips all non-text parts (spec violation, MUST)
 
@@ -14,8 +14,8 @@ v1 implementation pinned at parent commit `4b7d0c8` (kilo_context_bonsai @ `00fe
 - `kilo_context_bonsai/src/factory.ts:147-156` — full extractor; only `type === "text"` parts contribute, and `synthetic`/`ignored` text is also stripped. Output is then fed to `buildMessageTexts` (line 158-160) and consumed by `resolvePattern` via `resolveRange` (line 310).
 - `kilo_context_bonsai/src/guards.ts:17-32` — `resolvePattern` does `messages[i].text.includes(pattern)`. With empty `text`, no tool-only message can ever match.
 - `kilo_context_bonsai/src/factory.ts:44-52` — `OtherPart` has `type: string` plus arbitrary keys; tool parts pass through here at runtime but never reach `chunks`.
-- Kilo runtime `ToolPart` shape, `context-bonsai-kilo/kilocode/packages/opencode/src/session/message-v2.ts:344-353`: `type: "tool"`, `callID: string`, `tool: string`, `state: ToolState`. Tool calls and their results are NOT split — both live on the same single part, and `state` transitions in place from `pending` → `running` → `completed`/`error` (lines 274-336). On `completed`, `state.input` (record) and `state.output` (string) are populated; on `error`, `state.error` is populated.
-- Construction sites `context-bonsai-kilo/kilocode/packages/opencode/src/session/processor.ts:270-337` (streaming `tool-input-start`/`tool-call`) and `context-bonsai-kilo/kilocode/packages/opencode/src/session/prompt.ts:562-579` (subtask) confirm fields: `tool` (name), `state.input` (args), `state.output` (result string).
+- Kilo runtime `ToolPart` shape, `kilo/packages/opencode/src/session/message-v2.ts:344-353`: `type: "tool"`, `callID: string`, `tool: string`, `state: ToolState`. Tool calls and their results are NOT split — both live on the same single part, and `state` transitions in place from `pending` → `running` → `completed`/`error` (lines 274-336). On `completed`, `state.input` (record) and `state.output` (string) are populated; on `error`, `state.error` is populated.
+- Construction sites `kilo/packages/opencode/src/session/processor.ts:270-337` (streaming `tool-input-start`/`tool-call`) and `kilo/packages/opencode/src/session/prompt.ts:562-579` (subtask) confirm fields: `tool` (name), `state.input` (args), `state.output` (result string).
 - Reference impl `opencode_context_bonsai_plugin/src/prune-pattern.ts:53-83` (`buildMessageSearchCorpus`): for each `type: "tool"` part with `state.status === "completed"`, emits `` `tool:${part.tool}\ninput:${stableSerialize(part.state?.input)}\noutput:${stableSerialize(part.state?.output)}` `` joined by a `\n<bonsai-part>\n` delimiter. `stableSerialize` (lines 6-51) sorts object keys for deterministic output. This is the architectural model the Kilo port should mirror.
 - Existing tests `kilo_context_bonsai/test/plugin.test.ts:26-33` only ever build text-only messages via `msg()`, so no current test exercises tool-part extraction — there is no regression risk from the existing suite.
 

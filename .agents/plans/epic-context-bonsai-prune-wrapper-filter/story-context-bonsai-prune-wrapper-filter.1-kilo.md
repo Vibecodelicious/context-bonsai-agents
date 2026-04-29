@@ -43,7 +43,7 @@ This is a pure side-repo change. Kilo's resolver already takes a flattened `Mess
   - single-match-untouched: pattern matches exactly one wrapper-only message → returns it without filtering
 - [ ] Predicate has its own dedicated tests covering both accepted tool names + the non-prune negative case.
 - [ ] All existing 39+ side-repo tests still pass.
-- [ ] No agent-repo (`context-bonsai-kilo/kilocode/`) changes; verify by `git status` after edits.
+- [ ] No agent-repo (`kilo/`) changes; verify by `git status` after edits.
 
 ## Context References
 

@@ -25,7 +25,7 @@ Reviewer report had 0 CRITICAL / 0 HIGH / 0 MEDIUM / 0 LOW. Judge independently 
 - **HEAD results:**
   - side `bun test` → 49 pass / 0 fail, 95 expect() calls, 5 files (run by judge at HEAD `a4c909a`)
   - side `bun run typecheck` (`tsc --noEmit`) → clean (run by judge at HEAD `a4c909a`)
-  - agent-repo `context-bonsai-kilo/kilocode`: working tree clean (`git status` empty); no edits required by K1 per AC.
+  - agent-repo `kilo`: working tree clean (`git status` empty); no edits required by K1 per AC.
 - **Regressions:** none. All 39 pre-existing tests still pass; the 10 new tool-extraction tests are purely additive.
 - **Regression gate:** clear.
 
@@ -74,7 +74,7 @@ The reviewer's "0/0/0/0" verdict is corroborated by independent inspection at th
 - **Status:** VERIFIED. `package.json` `"exports"` field has the single mapping `".": "./src/plugin.ts"`. The new `src/index.ts` exports `stableSerialize` / `normalizeForStableJson` only and is reachable to external consumers (tests/tooling) via direct path import but is not what Kilo's plugin loader sees. The C2 invariant from CB-kilo.1 (no incidental named function exports on the plugin entry) is preserved — the legacy-plugin loader's `Object.values(mod).filter(typeof === "function")` scan still finds exactly one entry on `plugin.ts`. Comment block at top of `index.ts` documents the constraint.
 
 #### Claim: `\n<bonsai-part>\n` delimiter, explicit prefixes, no agent-repo edits
-- **Status:** VERIFIED. Constant defined at `factory.ts:35`, joined at `factory.ts:206`. Prefixes `text:` (line 183), `tool:`/`input:`/`output:` (line 197), `tool:`/`input:`/`error:` (line 201) all present. `git status` in `context-bonsai-kilo/kilocode` clean — no agent-repo edits.
+- **Status:** VERIFIED. Constant defined at `factory.ts:35`, joined at `factory.ts:206`. Prefixes `text:` (line 183), `tool:`/`input:`/`output:` (line 197), `tool:`/`input:`/`error:` (line 201) all present. `git status` in `kilo` clean — no agent-repo edits.
 
 #### Claim: 49/49 tests pass, typecheck clean
 - **Status:** VERIFIED by judge re-running. `bun test` → 49 pass / 0 fail / 95 expect() calls. `tsc --noEmit` exits 0.

@@ -33,8 +33,8 @@ Source issue: `.agents/issues/kilo-issues.md` Issue K1 (verified, evidence-backe
 - `kilo_context_bonsai/src/factory.ts:147-156` — `getText`, the extractor to extend.
 - `kilo_context_bonsai/src/factory.ts:158-160` — `buildMessageTexts`, the flatten loop that calls `getText`.
 - `kilo_context_bonsai/src/factory.ts:34-52` — `Part` / `OtherPart` / `TextPart` shapes.
-- `context-bonsai-kilo/kilocode/packages/opencode/src/session/message-v2.ts:344-353` — runtime `ToolPart` shape: `type: "tool"`, `tool: string`, `state: ToolState` with `state.input`, `state.output`, `state.error`, `state.status`.
-- `context-bonsai-kilo/kilocode/packages/opencode/src/session/processor.ts:270-337` and `.../prompt.ts:562-579` — tool-part construction sites confirming field names.
+- `kilo/packages/opencode/src/session/message-v2.ts:344-353` — runtime `ToolPart` shape: `type: "tool"`, `tool: string`, `state: ToolState` with `state.input`, `state.output`, `state.error`, `state.status`.
+- `kilo/packages/opencode/src/session/processor.ts:270-337` and `.../prompt.ts:562-579` — tool-part construction sites confirming field names.
 - `kilo_context_bonsai/src/factory.ts:412-429` — `detectToolCut` (already gates on `p.type === "tool"` with `state.status`); rejects ranges ending on incomplete tool calls.
 - `opencode_context_bonsai_plugin/src/prune-pattern.ts:6-51` — reference `stableSerialize` / `normalizeForStableJson` to port verbatim.
 - `opencode_context_bonsai_plugin/src/prune-pattern.ts:53-83` — reference `buildMessageSearchCorpus` showing the per-part shape: `tool:${tool}\ninput:${stableSerialize(input)}\noutput:${stableSerialize(output)}` joined by `\n<bonsai-part>\n`.
@@ -54,7 +54,7 @@ Source issue: `.agents/issues/kilo-issues.md` Issue K1 (verified, evidence-backe
 - [ ] Existing pure-text resolution behavior is unchanged: tests at `kilo_context_bonsai/test/plugin.test.ts` continue to pass with no fixture rewrites.
 - [ ] New tests live in `kilo_context_bonsai/test/plugin.test.ts` (extend the existing file; do NOT create a sibling `factory.test.ts`) and cover: tool-only message reachable by tool-name pattern; reachable by input-value pattern; reachable by output-substring pattern; pending/running tool parts NOT reachable; error-status tool parts reachable by `error:` substring pattern; key-order-independent serialization (same input object reordered yields identical text); mixed text+tool message remains reachable by either subsegment.
 - [ ] `bun test` and `bun run typecheck` both pass.
-- [ ] No agent-repo (`context-bonsai-kilo/kilocode/`) edits required.
+- [ ] No agent-repo (`kilo/`) edits required.
 
 ## Implementation Tasks
 

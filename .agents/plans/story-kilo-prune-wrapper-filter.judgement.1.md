@@ -25,7 +25,7 @@ Reviewer report had 0 CRITICAL / 0 HIGH / 0 MEDIUM / 0 LOW. Judge independently 
 - **HEAD results:**
   - side `bun test` → 67 pass / 0 fail, 119 expect() calls, 5 files (run by judge at HEAD `b266e8d`).
   - side `bun run typecheck` (`tsc --noEmit`) → clean (run by judge at HEAD `b266e8d`).
-  - agent-repo `context-bonsai-kilo/kilocode`: working tree clean (`git status --short` empty); no edits required by K2.
+  - agent-repo `kilo`: working tree clean (`git status --short` empty); no edits required by K2.
 - **Regressions:** none. All 49 K1 tests still pass; the 18 new K2 tests are purely additive.
 - **Regression gate:** clear.
 
@@ -77,7 +77,7 @@ The reviewer's "0/0/0/0" verdict is corroborated by independent inspection at th
   9. `buildMessageTexts` integration test — completed prune flips flag, error-status flips flag, non-prune does not, plain-text does not. ✅
   10. Predicate unit tests — completed (true), error (true), pending (false), running (false), non-prune completed (false), plain text (false), missing-state (false), empty parts (false). ✅ (8 tests, exceeds the 5 the AC named)
   11. `bun test` and `bun run typecheck` pass — judge re-verified, 67/0 and clean. ✅
-  12. No agent-repo edits — `git status --short` in `context-bonsai-kilo/kilocode` empty. ✅
+  12. No agent-repo edits — `git status --short` in `kilo` empty. ✅
 
 #### Claim: `buildMessageTexts` export safety
 - **Status:** VERIFIED. The `b266e8d` commit changed `buildMessageTexts` from local to exported (factory.ts:236), so integration tests can drive it directly. This is a test-surface export, not a plugin-loader entry. Kilo's plugin loader binds via `"exports": "./src/plugin.ts"` (verified in K1 judgment); `factory.ts` is reached transitively, and named exports here do not affect the CB-kilo.1 invariant about `plugin.ts`'s named-export contract. No new function on `plugin.ts`. Safe.

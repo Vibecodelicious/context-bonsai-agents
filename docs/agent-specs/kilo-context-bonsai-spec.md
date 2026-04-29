@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document specializes the shared Context Bonsai contract for Kilo CLI, the OpenCode-derived runtime under `context-bonsai-kilo/kilocode`.
+This document specializes the shared Context Bonsai contract for Kilo CLI, the OpenCode-derived runtime under `kilo`.
 Kilo is the strongest native-fit host in this workspace because it already exposes the core transform hooks bonsai needs. The main constraint is fork discipline: plugin-first, shared-core-touch only as a last resort.
 
 ## User Model
@@ -38,11 +38,11 @@ Kilo is the strongest native-fit host in this workspace because it already expos
 
 ## Verified Host Primitives
 
-- Session persistence is in [session.sql.ts](/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/src/session/session.sql.ts) and [message-v2.ts](/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/src/session/message-v2.ts).
-- Tool registry and execution are in [tool/registry.ts](/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/src/tool/registry.ts) and [tool/tool.ts](/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/src/tool/tool.ts).
-- Plugin hooks are declared in [packages/plugin/src/index.ts](/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/plugin/src/index.ts).
-- System transform is applied in [session/llm.ts](/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/src/session/llm.ts).
-- Message transform is applied in [session/prompt.ts](/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/src/session/prompt.ts).
+- Session persistence is in [session.sql.ts](/home/basil/projects/context-bonsai-agents/kilo/packages/opencode/src/session/session.sql.ts) and [message-v2.ts](/home/basil/projects/context-bonsai-agents/kilo/packages/opencode/src/session/message-v2.ts).
+- Tool registry and execution are in [tool/registry.ts](/home/basil/projects/context-bonsai-agents/kilo/packages/opencode/src/tool/registry.ts) and [tool/tool.ts](/home/basil/projects/context-bonsai-agents/kilo/packages/opencode/src/tool/tool.ts).
+- Plugin hooks are declared in [packages/plugin/src/index.ts](/home/basil/projects/context-bonsai-agents/kilo/packages/plugin/src/index.ts).
+- System transform is applied in [session/llm.ts](/home/basil/projects/context-bonsai-agents/kilo/packages/opencode/src/session/llm.ts).
+- Message transform is applied in [session/prompt.ts](/home/basil/projects/context-bonsai-agents/kilo/packages/opencode/src/session/prompt.ts).
 
 ## Unverified Or Weak Areas
 
@@ -101,9 +101,9 @@ Kilo is the strongest native-fit host in this workspace because it already expos
 
 ## Key References
 
-- [session.sql.ts](/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/src/session/session.sql.ts)
-- [message-v2.ts](/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/src/session/message-v2.ts)
-- [registry.ts](/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/src/tool/registry.ts)
-- [tool.ts](/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/opencode/src/tool/tool.ts)
-- [packages/plugin/src/index.ts](/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/packages/plugin/src/index.ts)
-- [AGENTS.md](/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode/AGENTS.md)
+- [session.sql.ts](/home/basil/projects/context-bonsai-agents/kilo/packages/opencode/src/session/session.sql.ts)
+- [message-v2.ts](/home/basil/projects/context-bonsai-agents/kilo/packages/opencode/src/session/message-v2.ts)
+- [registry.ts](/home/basil/projects/context-bonsai-agents/kilo/packages/opencode/src/tool/registry.ts)
+- [tool.ts](/home/basil/projects/context-bonsai-agents/kilo/packages/opencode/src/tool/tool.ts)
+- [packages/plugin/src/index.ts](/home/basil/projects/context-bonsai-agents/kilo/packages/plugin/src/index.ts)
+- [AGENTS.md](/home/basil/projects/context-bonsai-agents/kilo/AGENTS.md)

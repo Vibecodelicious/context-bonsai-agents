@@ -14,7 +14,7 @@ The goal is to define a shared behavioral contract for Context Bonsai, then spec
 
 - `cline`
 - `codex`
-- `context-bonsai-kilo`
+- `kilo`
 - `gemini-cli`
 
 These agent directories are local source checkouts used for inspection and reference only. They are intentionally ignored by this planning repository.

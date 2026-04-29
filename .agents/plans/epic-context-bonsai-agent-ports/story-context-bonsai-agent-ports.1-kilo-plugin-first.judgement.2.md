@@ -47,7 +47,7 @@ All five iter-1 approved items (C1, C2, H1, M1, M2) are verified closed against 
 - **Verdict (iter 1):** APPROVED (must fix)
 - **Status at HEAD:** FIXED
 - **Evidence:**
-  - `context-bonsai-kilo/kilocode/.opencode/opencode.jsonc:7` now reads `"plugin": ["../../../kilo_context_bonsai/src/plugin.ts"]` with `kilocode_change start/end` markers on lines 6 and 8.
+  - `kilo/.opencode/opencode.jsonc:7` now reads `"plugin": ["../../../kilo_context_bonsai/src/plugin.ts"]` with `kilocode_change start/end` markers on lines 6 and 8.
   - `realpath` from `.opencode/` resolves to `/home/basil/projects/context-bonsai-agents/kilo_context_bonsai/src/plugin.ts` (file exists, 1216 bytes, date 2026-04-23).
   - The seam test (H1) now stats the resolved path and would ENOENT-fail if the typo regressed.
 

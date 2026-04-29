@@ -74,7 +74,7 @@ Side-project submodules:
   - per-agent implementation work with clear target inventories and validation commands
   - future e2e parity protocols and release-readiness checks
 - Integration points (agent repos):
-  - `/home/basil/projects/context-bonsai-agents/context-bonsai-kilo/kilocode`
+  - `/home/basil/projects/context-bonsai-agents/kilo`
   - `/home/basil/projects/context-bonsai-agents/gemini-cli`
   - `/home/basil/projects/context-bonsai-agents/codex`
   - `/home/basil/projects/context-bonsai-agents/cline`
