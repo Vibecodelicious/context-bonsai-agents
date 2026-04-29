@@ -22,3 +22,6 @@
 [submodule "cline_context_bonsai"]
 	path = cline_context_bonsai
 	url = file:///home/basil/projects/.context-bonsai-side-bares/cline_context_bonsai.git
+[submodule "tweakcc_context_bonsai"]
+	path = tweakcc_context_bonsai
+	url = file:///home/basil/projects/.context-bonsai-side-bares/tweakcc_context_bonsai.git

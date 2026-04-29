@@ -2,6 +2,7 @@
 
 These documents specialize the shared Context Bonsai contract for each agent repo currently present in this workspace.
 
+- [claude-code-context-bonsai-spec.md](/home/basil/projects/context-bonsai-agents/docs/agent-specs/claude-code-context-bonsai-spec.md)
 - [cline-context-bonsai-spec.md](/home/basil/projects/context-bonsai-agents/docs/agent-specs/cline-context-bonsai-spec.md)
 - [codex-context-bonsai-spec.md](/home/basil/projects/context-bonsai-agents/docs/agent-specs/codex-context-bonsai-spec.md)
 - [gemini-cli-context-bonsai-spec.md](/home/basil/projects/context-bonsai-agents/docs/agent-specs/gemini-cli-context-bonsai-spec.md)
