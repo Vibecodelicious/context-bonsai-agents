@@ -1,27 +1,33 @@
+[submodule "opencode"]
+	path = opencode
+	url = git@github.com:Vibecodelicious/opencode.git
 [submodule "cline"]
 	path = cline
-	url = https://github.com/cline/cline.git
+	url = git@github.com:Vibecodelicious/cline.git
 [submodule "codex"]
 	path = codex
-	url = org-14957082@github.com:openai/codex.git
+	url = git@github.com:Vibecodelicious/codex.git
 [submodule "gemini-cli"]
 	path = gemini-cli
-	url = git@github.com:google-gemini/gemini-cli.git
+	url = git@github.com:Vibecodelicious/gemini-cli.git
 [submodule "kilo"]
 	path = kilo
-	url = git@github.com:Kilo-Org/kilocode.git
+	url = git@github.com:Vibecodelicious/kilocode.git
+[submodule "opencode_context_bonsai_plugin"]
+	path = opencode_context_bonsai_plugin
+	url = git@github.com:Vibecodelicious/opencode_context_bonsai_plugin.git
 [submodule "kilo_context_bonsai"]
 	path = kilo_context_bonsai
-	url = file:///home/basil/projects/.context-bonsai-side-bares/kilo_context_bonsai.git
+	url = git@github.com:Vibecodelicious/kilo_context_bonsai.git
 [submodule "gemini-cli_context_bonsai"]
 	path = gemini-cli_context_bonsai
-	url = file:///home/basil/projects/.context-bonsai-side-bares/gemini-cli_context_bonsai.git
+	url = git@github.com:Vibecodelicious/gemini-cli_context_bonsai.git
 [submodule "codex_context_bonsai"]
 	path = codex_context_bonsai
-	url = file:///home/basil/projects/.context-bonsai-side-bares/codex_context_bonsai.git
+	url = git@github.com:Vibecodelicious/codex_context_bonsai.git
 [submodule "cline_context_bonsai"]
 	path = cline_context_bonsai
-	url = file:///home/basil/projects/.context-bonsai-side-bares/cline_context_bonsai.git
+	url = git@github.com:Vibecodelicious/cline_context_bonsai.git
 [submodule "tweakcc_context_bonsai"]
 	path = tweakcc_context_bonsai
-	url = file:///home/basil/projects/.context-bonsai-side-bares/tweakcc_context_bonsai.git
+	url = git@github.com:Vibecodelicious/tweakcc_context_bonsai.git

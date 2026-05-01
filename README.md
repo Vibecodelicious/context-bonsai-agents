@@ -1,42 +1,68 @@
-# Context Bonsai Agents
+# Context Bonsai
 
-This repository is the planning workspace for cross-agent Context Bonsai work.
+Context Bonsai gives coding agents a way to manage long conversations without waiting for blunt overflow compaction. It lets the LLM archive older, completed parts of the transcript into compact placeholders, keep working with the important summary in view, and retrieve the full archived content later if it becomes relevant again.
 
-The goal is to define a shared behavioral contract for Context Bonsai, then specialize that contract per agent so each host can get an implementation plan that preserves the same user-facing behavior while minimizing upstream changes.
+OpenCode is the reference implementation. The other agent harness implementations follow the same shared behavior contract, but each one uses the integration points available in that harness.
 
-## What This Repo Contains
+## Why It Helps
 
-- A shared cross-agent spec in [docs/context-bonsai-agent-spec.md](/home/basil/projects/context-bonsai-agents/docs/context-bonsai-agent-spec.md)
-- A generalized e2e template in [docs/context-bonsai-e2e-template.md](/home/basil/projects/context-bonsai-agents/docs/context-bonsai-e2e-template.md)
-- Per-agent specs in [docs/agent-specs/README.md](/home/basil/projects/context-bonsai-agents/docs/agent-specs/README.md)
+Long coding sessions accumulate setup discussion, completed debugging paths, tool output, planning loops, and resolved implementation details. Standard context overflow handling usually waits until the window is already under pressure, then compresses broadly. That can lose details the model did not know would matter later.
 
-## Active Agent Targets
+Context Bonsai is more selective:
 
-Each target has a tracked agent submodule (the host source) plus a side submodule (`<agent>_context_bonsai/`) where bonsai logic lives:
+- The model can prune one contiguous range when it decides that range is stale enough to archive.
+- The archive keeps a summary and index terms in the live transcript.
+- The original content remains recoverable.
+- Protected context, active goals, unresolved tasks, and current validation loops stay visible.
 
-- `cline` + `cline_context_bonsai` (TypeScript, native tool registration)
-- `codex` + `codex_context_bonsai` (Rust, narrow core seam + side crate)
-- `kilo` + `kilo_context_bonsai` (TypeScript, OpenCode-style plugin)
-- `gemini-cli` + `gemini-cli_context_bonsai` (TypeScript, hooks-first + MCP-assisted)
-- Claude Code (closed-source) — `tweakcc_context_bonsai/` ships the `ccsnap` CLI plus the `context-bonsai` MCP server. There is no agent submodule for Claude Code; the optional [tweakcc Piebald-AI fork](https://github.com/Piebald-AI/tweakcc) is applied separately by users.
+The result is lower context pressure with less disruption to the model's working state.
 
-## Working Rules
+## How It Works
 
-- Prefer plugin-side, extension-side, hook-side, or MCP-side delivery over upstream/core changes.
-- Treat upstream/core seams as last resort capability enablers, not default implementation locations.
-- Base every per-agent decision on repository evidence, not analogy.
-- Keep behavioral parity model-visible: prune, retrieve, placeholders, guidance, and gauge matter more than code-level similarity.
+Context Bonsai exposes two model-facing operations:
 
-## Current State
+- `context-bonsai-prune`: archives one contiguous message range using unique boundaries plus a model-written summary and index terms.
+- `context-bonsai-retrieve`: restores an archived range by its anchor id.
 
-- Shared spec at [docs/context-bonsai-agent-spec.md](/home/basil/projects/context-bonsai-agents/docs/context-bonsai-agent-spec.md): authoritative; Pattern Matching Contract bullet 1 upgraded to MUST at commit `9f1ca61`.
-- Per-agent specs: complete for all five targets (Cline, Codex, Kilo, Gemini, Claude Code).
-- v1 ports closed: Cline (`1a44e64`), Codex (`31bbc92`), Gemini (`fd38ad7`), Kilo (`8684602`).
-- Spec-compliance epic closed: K1/K2, C1/C2/C3, CO1/CO2, G1/G2 — all 9 stories APPROVED AS-IS, work pinned on `feat/spec-compliance` branches in each submodule pair.
-- tweakcc (Claude Code): v0.1.0 initial release in `tweakcc_context_bonsai/` (extracted from `the_observer`); deterministic test coverage for E2E-01/02/03, partial E2E-05; live E2E-04/06/07 deferred to user-driven runs per `tweakcc_context_bonsai/docs/e2e-protocol.md`.
+After a prune, the archived range is represented by a placeholder like:
 
-## Intended Next Step
+```text
+[PRUNED: <anchor-id> to <range-end-id>]
+Summary: <what was archived>
+Index: <search terms for later retrieval>
+```
 
-- Drive the deferred E2E-04/06/07 scenarios for tweakcc.
-- Address the 21 pre-existing typecheck errors in `tweakcc_context_bonsai/src/lib/compact.ts` for a v0.2.0 cut.
-- Decide which v1+spec-compliance branches in the four agent submodules merge upstream vs. stay forked.
+The placeholder remains visible to the model, while the archived messages are hidden from the active prompt or marked inactive by the harness-specific implementation. Retrieval removes or clears that archive state so the original content becomes available again.
+
+## How The LLM Uses It
+
+Context Bonsai is designed for autonomous use by the model during a session.
+
+The LLM receives guidance and, where the harness supports it, context-pressure gauge reminders. When pressure increases, the model should identify completed, low-risk ranges that are no longer needed in full detail. It should not prune system/developer instructions, the session goal, unresolved user requests, active implementation work, pending validation loops, or recent context that may still be needed.
+
+The model should prune only after it has picked a safe contiguous range. It writes a concise summary and index terms so future retrieval decisions have enough information. If later work depends on archived details, the model can call `context-bonsai-retrieve` with the anchor id from the placeholder.
+
+Pruning is non-destructive in the intended behavior model: archived content is hidden from active context, not treated as thrown away.
+
+## Agent Harnesses
+
+The main repo explains shared behavior. Harness-specific installation and usage lives in each side repo.
+
+| Agent harness | Status | Install and usage |
+| --- | --- | --- |
+| OpenCode | Reference implementation | [opencode-context-bonsai installation](https://github.com/Vibecodelicious/opencode_context_bonsai_plugin#installation) |
+| Claude Code via tweakcc | Tested Claude Code implementation | [tweakcc Context Bonsai installation](https://github.com/Vibecodelicious/tweakcc_context_bonsai#installation) |
+| Cline | Warning: This Context Bonsai implementation has not yet been tested with its target agent harness. | [Cline Context Bonsai installation](https://github.com/Vibecodelicious/cline_context_bonsai#installation) |
+| Codex | Warning: This Context Bonsai implementation has not yet been tested with its target agent harness. | [Codex Context Bonsai installation](https://github.com/Vibecodelicious/codex_context_bonsai#installation) |
+| Gemini CLI | Warning: This Context Bonsai implementation has not yet been tested with its target agent harness. | [Gemini CLI Context Bonsai installation](https://github.com/Vibecodelicious/gemini-cli_context_bonsai#installation) |
+| Kilo | Warning: This Context Bonsai implementation has not yet been tested with its target agent harness. | [Kilo Context Bonsai installation](https://github.com/Vibecodelicious/kilo_context_bonsai#installation) |
+
+## Reference Material
+
+The shared behavior contract and implementation references live under `docs/`:
+
+- [Shared Context Bonsai agent spec](docs/context-bonsai-agent-spec.md)
+- [Per-agent implementation specs](docs/agent-specs/README.md)
+- [End-to-end validation template](docs/context-bonsai-e2e-template.md)
+
+For maintainer workflow, see [DEVELOPMENT.md](DEVELOPMENT.md).
