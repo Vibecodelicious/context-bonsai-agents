@@ -10,7 +10,7 @@ Long coding sessions accumulate setup discussion, completed debugging paths, too
 
 Context Bonsai is more selective:
 
-- The model can prune one contiguous range when it decides that range is stale enough to archive.
+- The model can prune contiguous ranges (one per call, as often as it wants) when it decides those ranges are stale enough to archive.
 - The archive keeps a summary and index terms in the live transcript.
 - The original content remains recoverable.
 - Protected context, active goals, unresolved tasks, and current validation loops stay visible.
