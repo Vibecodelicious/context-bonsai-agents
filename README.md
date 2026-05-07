@@ -56,6 +56,7 @@ The main repo explains shared behavior. Harness-specific installation and usage 
 | Codex | Warning: This Context Bonsai implementation has not yet been tested with its target agent harness. | [Codex Context Bonsai installation](https://github.com/Vibecodelicious/codex_context_bonsai#installation) |
 | Gemini CLI | Warning: This Context Bonsai implementation has not yet been tested with its target agent harness. | [Gemini CLI Context Bonsai installation](https://github.com/Vibecodelicious/gemini-cli_context_bonsai#installation) |
 | Kilo | Warning: This Context Bonsai implementation has not yet been tested with its target agent harness. | [Kilo Context Bonsai installation](https://github.com/Vibecodelicious/kilo_context_bonsai#installation) |
+| Pi | Planned: port plans approved 2026-04-23; in-tree implementation at pi-mono/packages/context-bonsai/ not yet started. | [Pi Context Bonsai installation](https://github.com/Vibecodelicious/pi_context_bonsai#development) |
 
 ## Reference Material
 
