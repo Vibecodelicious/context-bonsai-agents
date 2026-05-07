@@ -31,3 +31,9 @@
 [submodule "tweakcc_context_bonsai"]
 	path = tweakcc_context_bonsai
 	url = git@github.com:Vibecodelicious/tweakcc_context_bonsai.git
+[submodule "pi_context_bonsai"]
+	path = pi_context_bonsai
+	url = file:///home/basil/projects/.context-bonsai-side-bares/pi_context_bonsai.git
+[submodule "pi"]
+	path = pi
+	url = git@github.com:Vibecodelicious/pi-mono.git
