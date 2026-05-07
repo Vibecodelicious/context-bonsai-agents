@@ -14,7 +14,7 @@ Unit + integration tests from Stories 1–4 prove module-level correctness under
 
 Two artifacts land in this story:
 
-1. **Protocol document** (`packages/context-bonsai/docs/e2e-testing.md`) — the reusable, bonsai-specific test plan. Points at the research baseline for general Pi-interaction details and focuses on what is unique to context-bonsai: the six scenarios below, their setup prompts, the JSON-event-stream markers to assert on, and the session-JSONL shapes to grep / `jq`.
+1. **Protocol document** (`packages/context-bonsai/docs/e2e-testing.md`) — the reusable, bonsai-specific test plan. Points at the research baseline for general Pi-interaction details and focuses on what is unique to context-bonsai: the seven scenarios below, their setup prompts, the JSON-event-stream markers to assert on, and the session-JSONL shapes to grep / `jq`.
 2. **Automation harness** (`packages/context-bonsai/test/e2e/run-e2e.sh` plus `assert.mjs`) — scripted driver that executes each scenario with the recommended command pattern from the baseline, asserts on `--mode json` stdout events and on the session JSONL file, and reports pass/fail per scenario. Not part of `npm run check` (costs a real LLM call per scenario).
 
 ## User Model
@@ -48,10 +48,10 @@ Two artifacts land in this story:
 
 - [ ] `packages/context-bonsai/docs/e2e-testing.md` exists and includes:
   - A one-paragraph header pointing at `.agents/research/pi-e2e-interaction-baseline.md` as the Pi-interaction source of truth.
-  - Sections: Purpose, Prerequisites (incl. API-key env), Pre-flight Checks, Scenarios A–F (setup prompts, expected JSON-stream markers, expected session-JSONL markers, failure patterns), Recording Results (with a Test Runs log section).
+  - Sections: Purpose, Prerequisites (incl. API-key env), Pre-flight Checks, Scenarios A–G (setup prompts, expected JSON-stream markers, expected session-JSONL markers, failure patterns), Recording Results (with a Test Runs log section).
   - At least one recorded green run (date, commit hash, per-scenario PASS, short observation list).
 - [ ] `packages/context-bonsai/test/e2e/run-e2e.sh` exists and:
-  - Accepts `--scenario <A..F>` and `--all`.
+  - Accepts `--scenario <A..G>` and `--all`.
   - Exits with a clear error if `$BONSAI_E2E_API_KEY` (or the provider's standard env var) is missing.
   - For each scenario: creates a fresh tmpdir, runs the prompt sequence, captures stdout per turn, asserts via `assert.mjs`, cleans up, prints `PASS` / `FAIL <reason>`.
   - Returns non-zero on any scenario failure; exit code for `--all` reflects the worst case.
@@ -62,7 +62,7 @@ Two artifacts land in this story:
   - `sessionHasMessageMatching(sessionFile, predicate) → boolean`
   - `countMatchesInEventStream(pathToLog, regex) → number`
 - [ ] `packages/context-bonsai/package.json` gains a non-default `"e2e"` script: `"e2e": "bash test/e2e/run-e2e.sh --all"` (documentation only; not invoked by `npm run check`).
-- [ ] All six scenarios PASS in a single `run-e2e.sh --all` invocation. Evidence recorded in protocol Test Runs.
+- [ ] All seven scenarios PASS in a single `run-e2e.sh --all` invocation. Evidence recorded in protocol Test Runs.
 
 ### Scenarios
 
@@ -100,8 +100,13 @@ Each scenario starts from a fresh `mktemp -d -t pi-bonsai-XXXX` as `--session-di
    - In a single assistant message, prompt `call context-bonsai-prune ... then in the same response call context-bonsai-retrieve with that same anchor_id`.
    - Assert: both `tool_execution_end` events carry non-error results. Prune returns `Archived ...`, retrieve returns `Restored ...`.
    - Assert on the session JSONL: one `context-bonsai:archive` entry and one `context-bonsai:archive-clear` entry are both present (audit record preserved).
-   - Run one more trivial turn on the same session and assert the delivered transcript is un-elided (tombstone-wins hydration at `session_start` produces the original context).
-   - This scenario is the live-stack proof that we correctly dropped OpenCode's same-step guard: the sequence that OpenCode rejects must succeed in Pi.
+   - Run one more trivial turn on the same session and assert the delivered transcript is un-elided.
+   - This scenario is the live-stack proof of Pi's intentional same-turn no-op behavior.
+
+7. **Scenario G — Secret prune oracle.**
+   - Seed a unique high-entropy nonce in a message range, prune that range using a summary and index terms that do not include the nonce, then ask a follow-up that would require recalling the nonce without retrieval.
+   - Assert the post-prune model-visible transcript/event stream contains the placeholder and does not contain the nonce outside archived session JSONL entries.
+   - Assert the model's final response does not include the nonce. This is a behavioral oracle, not proof of secrecy against logs; it verifies the active context no longer carries pruned sensitive content.
 
 ### Test → Fix → Test Loop
 
@@ -166,14 +171,14 @@ Each scenario starts from a fresh `mktemp -d -t pi-bonsai-XXXX` as `--session-di
 ## Step-by-Step Tasks
 
 1. Re-read `.agents/research/pi-e2e-interaction-baseline.md` end-to-end; bookmark the minimum-reproducible script in §6.
-2. Write `packages/context-bonsai/docs/e2e-testing.md` with Scenarios A–F.
+2. Write `packages/context-bonsai/docs/e2e-testing.md` with Scenarios A–G.
 3. Implement `packages/context-bonsai/test/e2e/assert.mjs`.
 4. Implement `packages/context-bonsai/test/e2e/run-e2e.sh`.
 5. Add the `"e2e"` script entry in `package.json`.
 6. Export credentials; run `run-e2e.sh --scenario A` as a smoke check.
 7. Run `run-e2e.sh --all`. Record outcome.
 8. For every failure: diagnose, patch, add regression test, rerun. Iterate.
-9. When all six PASS: update Test Runs with final date + commit hash. Run `npm run check`.
+9. When all seven PASS: update Test Runs with final date + commit hash. Run `npm run check`.
 10. Commit as `[Story 1.5] context-bonsai e2e protocol + green run`.
 
 ## Testing Strategy
@@ -190,7 +195,7 @@ Each scenario starts from a fresh `mktemp -d -t pi-bonsai-XXXX` as `--session-di
 
 ## Worktree Artifact Check
 
-- Checked At: 2026-04-23
+- Checked At: 2026-05-06
 - Planned Target Files: `packages/context-bonsai/docs/e2e-testing.md`, `packages/context-bonsai/test/e2e/run-e2e.sh`, `packages/context-bonsai/test/e2e/assert.mjs`, `packages/context-bonsai/test/e2e/scenarios/`, `packages/context-bonsai/package.json` (modified), regression-test files discovered during the fix loop.
 - Overlaps Found: `packages/context-bonsai/package.json` modified relative to Story 1 (in-epic). Fix-loop regression tests may touch prior stories' test directories (in-epic).
 - Escalation Status: none (in-epic modifications are not escalation triggers).
@@ -206,7 +211,7 @@ Each scenario starts from a fresh `mktemp -d -t pi-bonsai-XXXX` as `--session-di
 ## Completion Checklist
 
 - [ ] All acceptance criteria met
-- [ ] All six scenarios PASS in a single `run-e2e.sh --all` run; result recorded in protocol Test Runs
+- [ ] All seven scenarios PASS in a single `run-e2e.sh --all` run; result recorded in protocol Test Runs
 - [ ] Every fix applied during the loop has an accompanying unit or integration regression test
 - [ ] `npm run check` passes at the final commit
 - [ ] Plan approved and committed before orchestration begins

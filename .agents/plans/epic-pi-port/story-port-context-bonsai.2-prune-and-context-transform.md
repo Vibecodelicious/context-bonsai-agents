@@ -9,7 +9,7 @@
 Add the core value of context-bonsai: archive a contiguous range of messages so subsequent LLM calls see a compact placeholder instead.
 
 This story:
-1. Ports `prune-pattern.ts` + `prune-pattern-matcher.ts` from OpenCode (pure logic, no Pi deps).
+1. Ports `prune-pattern.ts` + `prune-pattern-matcher.ts` from OpenCode (pure logic, no Pi deps), adapted so searchable text includes normal message text plus completed tool-call names, input arguments, and outputs.
 2. Defines an archive schema + in-memory archive store, persisted via `pi.appendEntry("context-bonsai:archive", ...)` and rebuilt on `session_start` by scanning `sessionManager.getEntries()` for that `customType`.
 3. Registers `context-bonsai-prune` as an LLM-callable tool. Tool execution resolves `from_pattern`/`to_pattern` against entries on the current branch, validates the range, and writes an archive record that includes **both** the entry ids and the `(role, timestamp)` pairs of the anchor and range-end messages so later correlation is robust to compaction.
 4. Registers a `"context"` event handler that locates each active archive's anchor inside `event.messages` by matching `(role, timestamp)` — **not** by positional zip. `buildSessionContext` (`session-manager.ts:376-419`) prepends a synthetic compaction-summary message when a `CompactionEntry` is on the branch, drops entries before `firstKeptEntryId`, and injects synthetics for `branch_summary` / `custom_message` entries, so a naive `getBranch().filter(e => e.type === "message")` zip is **wrong**. Once located, the handler replaces the anchor's content with the placeholder text (same format as OpenCode: `[PRUNED: <anchorEntryId> to <rangeEndEntryId>]\nSummary: …\nIndex: …`), and elides followers up to the matched range-end position.
@@ -36,11 +36,14 @@ The gauge does **not** go in this story — Story 4 adds the gauge into the same
 
 ### What we are NOT porting from OpenCode (and why)
 
-OpenCode's plugin carries three pieces of machinery that exist only to compensate for OpenCode's runtime shape or to guard scenarios that are benign in Pi. Do not port them.
+OpenCode's plugin carries two pieces of machinery that exist only to compensate for OpenCode's runtime shape. Do not port them.
 
 1. **`runtime-compat.ts` / `updateMessageAtomic` / `LOAD_MESSAGES_COMPAT_ERROR` / `UPDATE_MESSAGE_COMPAT_ERROR`.** OpenCode uses `client.session.updateMessageAtomic(ctx, id, mutate)` (`opencode_context_bonsai_plugin/src/runtime-compat.ts:68-78`) to mutate `msg.info.metadata` in place with locking because OpenCode's session can be shared and mutated concurrently. Pi has no such surface: archive state is appended via `pi.appendEntry(customType, data)`, which resolves to `SessionManager._persist` → `appendFileSync` (`packages/coding-agent/src/core/session-manager.ts:801-819`) in a single-process agent. Each write is atomic by virtue of the filesystem call. The entire `runtime-compat` abstraction is dead weight in Pi. Do not add any equivalent. Do not introduce a mutex, lock file, or "atomic update" wrapper.
 2. **`idVisibility` state + the text-part ID-prefixing transform** (`opencode_context_bonsai_plugin/src/state.ts:10,20-21`; applied in `index.ts:79-104`). OpenCode's placeholder does not carry the anchor id, so the plugin prefixes every text part with `[msg:<id>]` at transform time, gated by a flag. Pi's placeholder `[PRUNED: <anchorEntryId> to <rangeEndEntryId>]` already contains the id, so the model reads it directly and passes it back to `context-bonsai-retrieve`. No prefixing, no visibility flag, no `setIdVisibility`.
-3. **`sameStepPrunes` + the same-step retrieve guard** (`opencode_context_bonsai_plugin/src/state.ts:11,23-24,29-31`; checked in `retrieve.ts:41-44`). OpenCode errors when the model tries to retrieve an archive it just created in the same turn. The stated intent is "prevent wasted round-trips" but the guard is cost-positive: the prune has already executed (the archive entry is written), so rejecting the retrieve just forces the model into *another* turn of reasoning plus a retry. Net effect with the guard: more tokens burnt. Net effect without the guard: archive entry and tombstone entry both land in the session file (audit-clean), and the `"context"` handler's tombstone-wins hydration in Story 2 produces exactly the undo the model asked for. Drop the guard, drop the state, drop the error string. Prune+retrieve in the same turn is a supported no-op.
+
+### Same-turn prune+retrieve behavior
+
+Pi intentionally does not port OpenCode's same-step guard. In a same-turn prune+retrieve sequence, both operations succeed: prune writes a `context-bonsai:archive` entry, retrieve writes `context-bonsai:archive-clear`, and tombstone-wins hydration yields an audit-clean no-op.
 
 ### Same-turn race that IS real in Pi (and the fix)
 
@@ -49,6 +52,8 @@ Pi's tool-execution mode defaults to `"parallel"` (`packages/agent/src/types.ts:
 ## Acceptance Criteria
 
 - [ ] `packages/context-bonsai/src/prune-pattern.ts` and `prune-pattern-matcher.ts` ported from OpenCode with unit-test parity (port the existing tests too, adapted to Pi's `SessionEntry` shape where they previously used OpenCode message shape).
+- [ ] Pattern matching searchable text includes stable representations of normal text content, completed assistant `toolCall` name and input arguments, and corresponding `toolResult` tool name and output content/details. Unit tests cover matching each category.
+- [ ] Ambiguous pattern resolution implements the shared-spec prune-wrapper filter: before returning ambiguity, exclude prior `context-bonsai-prune` tool-use wrapper candidates; if exactly one non-wrapper candidate remains, resolve to it. Unit tests cover retry-after-ambiguity so echoed `from_pattern` / `to_pattern` text cannot self-poison the retry.
 - [ ] `packages/context-bonsai/src/archive-store.ts` exposes:
   - `type Archive = { anchorEntryId: string; anchorRole: "user"|"assistant"|"toolResult"; anchorTimestamp: number; rangeEndEntryId: string; rangeEndRole: "user"|"assistant"|"toolResult"; rangeEndTimestamp: number; summary: string; indexTerms: string[]; reason?: string; createdInTurn: number }`
   - `class ArchiveStore` with `get(anchorEntryId)`, `set(archive)`, `clear(anchorEntryId)`, `listActive(branchEntryIds: Set<string>): Archive[]`, `hydrateFromEntries(entries: SessionEntry[])`.
@@ -60,7 +65,7 @@ Pi's tool-execution mode defaults to `"parallel"` (`packages/agent/src/types.ts:
   - Validates: non-empty summary/index_terms, from precedes to, neither within an already-pruned range, no incomplete tool calls in range.
   - Captures `(role, timestamp)` from both message entries' wrapped `message` object.
   - Persists archive via `pi.appendEntry("context-bonsai:archive", archive)` — record includes the `(role, timestamp)` pairs alongside the entry ids. No `updateMessageAtomic`-style wrapper; the append is the atomic unit.
-  - Updates `ArchiveStore` (no `sameStepPrunes` — that state doesn't exist in Pi's port).
+  - Updates `ArchiveStore`.
   - Returns the same success string as OpenCode (`Archived N messages from pattern "X" ...`).
   - Does NOT call `setIdVisibility`: the placeholder carries the id already.
 - [ ] `packages/context-bonsai/src/context-transform.ts` exports `createContextHandler(store, state)` wired via `pi.on("context", handler)` that:
@@ -73,6 +78,7 @@ Pi's tool-execution mode defaults to `"parallel"` (`packages/agent/src/types.ts:
     6. Removes messages between anchor-index+1 and range-end-index inclusive.
   - Returns `{ messages }` with the rewrites applied. Multiple archives on the same transcript are applied in document order.
 - [ ] `pi.on("session_start", ...)` rebuilds the store from `sessionManager.getEntries()` scanning for `type === "custom" && customType === "context-bonsai:archive"`. Later `customType === "context-bonsai:archive-clear"` entries override earlier archives for the same `anchorEntryId` (tombstone semantics — Story 3 writes these).
+- [ ] If required primitives are unavailable or incompatible (`ctx.sessionManager.getBranch`, `ctx.sessionManager.getEntries`, `pi.appendEntry`, or the `"context"` transform path), prune/transform behavior fails closed with a deterministic plain-text compatibility error rather than silently succeeding or no-oping.
 - [ ] Unit tests cover: pattern resolution (port existing OpenCode tests), archive store hydrate/clear, validation errors.
 - [ ] Integration test `packages/coding-agent/test/suite/context-bonsai/02-prune.test.ts`:
   - Faux-provider transcript with ~8 messages (mixed user/assistant/toolResult).
@@ -83,6 +89,9 @@ Pi's tool-execution mode defaults to `"parallel"` (`packages/agent/src/types.ts:
   - Seed a session that contains a `CompactionEntry` on the branch plus a `BranchSummaryEntry` (use `SessionManager` APIs directly in the test setup).
   - Prune a range after both synthetics, then assert the `"context"` event's delivered transcript has the placeholder in the right position and the synthetics are undisturbed.
   - This test is the regression guard for the buildSessionContext divergence described in the Story Description.
+- [ ] Integration test `packages/coding-agent/test/suite/context-bonsai/02c-prune-secret-oracle.test.ts`:
+  - Seed a unique secret nonce in a message range, prune that range using a summary/index that do not include the nonce, then assert the next model-visible transcript contains the placeholder but not the nonce.
+  - This is the shared-spec sensitive-content oracle: post-prune recall must not be possible from active context alone.
 - [ ] `npm run check` passes.
 
 ## Context References
@@ -127,7 +136,7 @@ Pi's tool-execution mode defaults to `"parallel"` (`packages/agent/src/types.ts:
 ## Implementation Plan
 
 ### Phase 1: Pure-logic modules (no Pi deps)
-- Port `prune-pattern.ts`, `prune-pattern-matcher.ts`, `schema.ts` verbatim where the shape allows. Rewrite the `WithParts`-based helpers in `prune.ts` against Pi's `SessionMessageEntry` + `AgentMessage`.
+- Port `prune-pattern.ts`, `prune-pattern-matcher.ts`, `schema.ts` where the shape allows. Rewrite the text extraction helpers against Pi's `SessionMessageEntry` + `AgentMessage`, and include completed tool-call name/input/output content in the searchable text per the shared spec.
 - Port `state.ts` **selectively**: keep `turnCount` only. Drop `sameStepPrunes`, `idVisibility`, `tokenCache`, `modelLimitCache` (Pi has `ctx.getContextUsage()`, covered in Story 4).
 - Do NOT port `runtime-compat.ts`. Pi's `pi.appendEntry` is the atomic write primitive.
 - Implement `ArchiveStore` + `hydrateFromEntries`.
@@ -152,7 +161,7 @@ Pi's tool-execution mode defaults to `"parallel"` (`packages/agent/src/types.ts:
   ```
 
 ### Phase 5: Tests
-- Unit tests for matcher, validation, store hydration + tombstone precedence.
+- Unit tests for matcher, tool-call searchable text, prune-wrapper ambiguity filtering, validation, store hydration + tombstone precedence.
 - Integration test 02-prune.test.ts.
 
 ### Phase 6: Gates
@@ -161,19 +170,19 @@ Pi's tool-execution mode defaults to `"parallel"` (`packages/agent/src/types.ts:
 ## Step-by-Step Tasks
 
 1. Re-read all OpenCode source files listed in Context References.
-2. Port `prune-pattern.ts` + matcher + their tests into `packages/context-bonsai/`. Make matcher operate on `SessionEntry[]` rather than OpenCode's `WithParts`.
+2. Port `prune-pattern.ts` + matcher + their tests into `packages/context-bonsai/`. Make matcher operate on `SessionEntry[]` rather than OpenCode's `WithParts`, including text extraction for completed tool-call names, arguments, and outputs.
 3. Port `schema.ts`, `state.ts`.
 4. Implement `archive-store.ts` with `hydrateFromEntries` that honours tombstones (Story 3 will write them; implement the precedence here).
 5. Implement `prune.ts` tool factory.
 6. Implement `context-transform.ts`.
 7. Wire all of the above into `src/index.ts`.
-8. Write unit tests for pattern matcher (ported), archive store, and prune validation.
-9. Write integration test `02-prune.test.ts` including the reload scenario.
+8. Write unit tests for pattern matcher (ported), tool-call searchable text, prune-wrapper ambiguity filtering, archive store, and prune validation.
+9. Write integration tests `02-prune.test.ts`, `02b-prune-with-compaction.test.ts`, and `02c-prune-secret-oracle.test.ts` including the reload and sensitive-content scenarios.
 10. Run validation commands; fix failures; commit as `[Story 1.2] context-bonsai prune tool + archive store + context transform`.
 
 ## Testing Strategy
 
-- **Unit**: pattern-matcher parity with ported OpenCode tests; archive-store hydration incl. tombstone precedence; prune-validation error paths.
+- **Unit**: pattern-matcher parity with ported OpenCode tests; completed tool-call searchable text; retry-safe prune-wrapper ambiguity filtering; archive-store hydration incl. tombstone precedence; prune-validation error paths.
 - **Integration**: faux-provider session, prune call, assert next `"context"` event delivers placeholder + elided range; reload persists.
 
 ## Validation Commands
@@ -182,12 +191,12 @@ Per `AGENTS.md`: use the vitest CLI form for named tests.
 
 - `cd /home/basil/projects/context-bonsai-pi && npm run check`
 - `cd /home/basil/projects/context-bonsai-pi/packages/context-bonsai && npx tsx ../../node_modules/vitest/dist/cli.js --run test/`
-- `cd /home/basil/projects/context-bonsai-pi/packages/coding-agent && npx tsx ../../node_modules/vitest/dist/cli.js --run test/suite/context-bonsai/02-prune.test.ts test/suite/context-bonsai/02b-prune-with-compaction.test.ts`
+- `cd /home/basil/projects/context-bonsai-pi/packages/coding-agent && npx tsx ../../node_modules/vitest/dist/cli.js --run test/suite/context-bonsai/02-prune.test.ts test/suite/context-bonsai/02b-prune-with-compaction.test.ts test/suite/context-bonsai/02c-prune-secret-oracle.test.ts`
 
 ## Worktree Artifact Check
 
-- Checked At: 2026-04-23
-- Planned Target Files: `packages/context-bonsai/src/prune-pattern.ts`, `packages/context-bonsai/src/prune-pattern-matcher.ts`, `packages/context-bonsai/src/archive-store.ts`, `packages/context-bonsai/src/state.ts`, `packages/context-bonsai/src/schema.ts`, `packages/context-bonsai/src/prune.ts`, `packages/context-bonsai/src/context-transform.ts`, `packages/context-bonsai/src/index.ts` (modified), `packages/context-bonsai/test/prune-pattern.test.ts`, `packages/context-bonsai/test/archive-store.test.ts`, `packages/context-bonsai/test/prune-validation.test.ts`, `packages/context-bonsai/test/context-transform.test.ts`, `packages/coding-agent/test/suite/context-bonsai/02-prune.test.ts`, `packages/coding-agent/test/suite/context-bonsai/02b-prune-with-compaction.test.ts`
+- Checked At: 2026-05-06
+- Planned Target Files: `packages/context-bonsai/src/prune-pattern.ts`, `packages/context-bonsai/src/prune-pattern-matcher.ts`, `packages/context-bonsai/src/archive-store.ts`, `packages/context-bonsai/src/state.ts`, `packages/context-bonsai/src/schema.ts`, `packages/context-bonsai/src/prune.ts`, `packages/context-bonsai/src/context-transform.ts`, `packages/context-bonsai/src/index.ts` (modified), `packages/context-bonsai/test/prune-pattern.test.ts`, `packages/context-bonsai/test/archive-store.test.ts`, `packages/context-bonsai/test/prune-validation.test.ts`, `packages/context-bonsai/test/context-transform.test.ts`, `packages/coding-agent/test/suite/context-bonsai/02-prune.test.ts`, `packages/coding-agent/test/suite/context-bonsai/02b-prune-with-compaction.test.ts`, `packages/coding-agent/test/suite/context-bonsai/02c-prune-secret-oracle.test.ts`
 - Overlaps Found: `packages/context-bonsai/src/index.ts` → will be `tracked-dirty` relative to Story 1's commit by design (this is an expected in-epic modification, not a pre-existing dirty artifact). All other paths are absent at the start of the epic.
 - Escalation Status: none (in-epic modification of Story 1's output is not an escalation trigger).
 - Decision Citation: n/a

@@ -8,7 +8,7 @@
 
 Add the context-usage gauge: a `<system-reminder>…</system-reminder>` text block appended to the last user message on a cadence (every N turns), telling the LLM its current token usage as a percentage of the usable budget. This is the signal that drives the model to autonomously call `context-bonsai-prune` — it **must** land in the LLM's own context, never only in a human-visible footer.
 
-The gauge text is the five-tier string from OpenCode's `gauge.ts:formatGaugeText`.
+The gauge text uses the shared spec's four locked severity bands: `<30%`, `30-60%`, `61-80%`, and `>80%` with explicit `PRUNE NOW` language in the urgent band.
 
 Optional secondary UX: mirror the current gauge to `ctx.ui.setStatus("bonsai", ...)` for operators running the TUI. This is additive only; the system-reminder injection is non-negotiable.
 
@@ -33,7 +33,7 @@ Optional secondary UX: mirror the current gauge to `ctx.ui.setStatus("bonsai", .
 ## Acceptance Criteria
 
 - [ ] `packages/context-bonsai/src/gauge.ts` exports:
-  - `formatGaugeText(used: number, usableBudget: number, percent: number): string` — port verbatim from `opencode-context-bonsai/src/gauge.ts`.
+  - `formatGaugeText(used: number, usableBudget: number, percent: number): string` — implements the shared spec's four locked severity bands.
   - `maybeInjectGauge(messages: AgentMessage[], state, usage: ContextUsage): AgentMessage[]` — pure function that returns a transcript with the gauge appended to the last user message iff cadence fires and usage is known.
 - [ ] The context handler from Story 2 calls `maybeInjectGauge(...)` after archive placeholders are applied.
 - [ ] Cadence: every `GAUGE_CADENCE` turns (5, same constant name/value as OpenCode). Turn count lives in `state`, incremented by the handler itself (same as OpenCode's `setTurnCount` flow).
@@ -41,7 +41,7 @@ Optional secondary UX: mirror the current gauge to `ctx.ui.setStatus("bonsai", .
 - [ ] If `ctx.getContextUsage()` returns undefined or `tokens === null`, no gauge is injected.
 - [ ] `pi.on("model_select", ...)` is NOT required — `ctx.getContextUsage()` already incorporates the current model. Only `state.turnCount` bookkeeping is needed.
 - [ ] Unit tests:
-  - `formatGaugeText` tier boundaries (port OpenCode's `gauge.test.ts`).
+  - `formatGaugeText` tier boundaries for `<30%`, `30-60%`, `61-80%`, and `>80%`, including `PRUNE NOW` in the urgent band.
   - `maybeInjectGauge` no-ops when cadence not fired.
   - `maybeInjectGauge` no-ops when usage is undefined.
   - `maybeInjectGauge` injects correctly to array-form and string-form user content.
@@ -73,7 +73,7 @@ Optional secondary UX: mirror the current gauge to `ctx.ui.setStatus("bonsai", .
 ## Implementation Plan
 
 ### Phase 1: Pure gauge module
-- Port `formatGaugeText` verbatim (all five tiers including the PRUNE-NOW tier). This string is behaviourally load-bearing; do not edit it.
+- Implement `formatGaugeText` from the shared spec's four locked severity bands. This string is behaviourally load-bearing; do not introduce Pi-only bands.
 - Implement `maybeInjectGauge` as a pure function taking `(messages, state, usage)` and returning a new array.
 
 ### Phase 2: Wire into context handler
@@ -89,7 +89,7 @@ Optional secondary UX: mirror the current gauge to `ctx.ui.setStatus("bonsai", .
 
 ## Step-by-Step Tasks
 
-1. Re-read `gauge.ts` and `gauge.test.ts` in the OpenCode plugin.
+1. Re-read `gauge.ts` and `gauge.test.ts` in the OpenCode plugin, then adapt only where needed to satisfy the shared spec's four locked bands.
 2. Implement `src/gauge.ts`.
 3. Modify `src/context-transform.ts` to call `maybeInjectGauge` after archive transforms.
 4. Write unit tests (port + new).
@@ -99,7 +99,7 @@ Optional secondary UX: mirror the current gauge to `ctx.ui.setStatus("bonsai", .
 
 ## Testing Strategy
 
-- **Unit**: five-tier text, cadence gating, no-op on missing usage, both user-content shapes (string vs array).
+- **Unit**: four-band severity text, cadence gating, no-op on missing usage, both user-content shapes (string vs array).
 - **Integration**: five-turn faux session asserting exact firing cadence and format.
 
 ## Validation Commands
@@ -112,7 +112,7 @@ Per `AGENTS.md`: use the vitest CLI form for named tests.
 
 ## Worktree Artifact Check
 
-- Checked At: 2026-04-23
+- Checked At: 2026-05-06
 - Planned Target Files: `packages/context-bonsai/src/gauge.ts`, `packages/context-bonsai/src/context-transform.ts` (modified), `packages/context-bonsai/src/state.ts` (possibly modified), `packages/context-bonsai/test/gauge.test.ts`, `packages/coding-agent/test/suite/context-bonsai/04-gauge.test.ts`
 - Overlaps Found: `packages/context-bonsai/src/context-transform.ts` and `state.ts` will be modified relative to Story 2's commit (in-epic).
 - Escalation Status: none

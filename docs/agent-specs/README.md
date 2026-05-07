@@ -7,6 +7,7 @@ These documents specialize the shared Context Bonsai contract for each agent rep
 - [codex-context-bonsai-spec.md](codex-context-bonsai-spec.md)
 - [gemini-cli-context-bonsai-spec.md](gemini-cli-context-bonsai-spec.md)
 - [kilo-context-bonsai-spec.md](kilo-context-bonsai-spec.md)
+- [pi-context-bonsai-spec.md](pi-context-bonsai-spec.md)
 
 All of them derive from the shared contract in [context-bonsai-agent-spec.md](../context-bonsai-agent-spec.md).
 
