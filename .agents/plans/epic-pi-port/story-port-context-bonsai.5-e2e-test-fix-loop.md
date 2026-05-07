@@ -30,7 +30,8 @@ Two artifacts land in this story:
 - Failures produce readable diagnostics: which scenario, what marker was missing, which log/session file to open.
 - Protocol exercises cross-turn state: prune archives, retrieve restores, reload persists, gauge cadence fires.
 - Protocol tolerates LLM non-determinism: assert on structural markers (tool names, custom-entry customType, placeholder literal prefix, gauge regex), never on arbitrary model prose.
-- Cost gates: live-LLM scenarios opt-in via env vars; no accidental runs from default `npm` commands.
+- Cost gates: live-LLM scenarios opt-in via credential presence; no accidental runs from default `npm` commands.
+- Operators who have already authenticated via `pi login` MUST be able to run the suite without setting any env var. Env-var overrides are honored when present.
 
 ### Design Implications (from the Pi baseline)
 - **Driver command**: `./pi-test.sh -p --mode json -e packages/context-bonsai --session-dir "$DIR" [--session "$FILE"] "<prompt>"`. `--mode json` emits `AgentSessionEvent` objects as JSONL on stdout — the highest-fidelity signal; prefer it over session-file grepping when both are available.
@@ -39,6 +40,7 @@ Two artifacts land in this story:
 - **No hermetic dry-run**. Live-LLM invocations are required. Pin `BONSAI_E2E_PROVIDER=anthropic` and `BONSAI_E2E_MODEL=claude-sonnet-4-6` by default; overridable via env.
 - **Write buffering**: session JSONL writes before the first assistant message are buffered (`session-manager.ts:_persist`). Read the file only after `agent_end` appears on stdout.
 - Each scenario uses a fresh `mktemp -d` as `--session-dir` so runs don't cross-contaminate.
+- **Credential discovery delegates to Pi's `AuthStorage`.** Per the per-agent spec's "E2E Credential Discovery" section, the harness MUST gate on `AuthStorage.hasAuth(provider)` (`packages/coding-agent/src/core/auth-storage.ts:324`) rather than parse env vars or `auth.json` itself. The harness applies its `BONSAI_E2E_API_KEY` override via `setRuntimeApiKey()` before the check so it participates in Pi's documented priority order (auth-storage.ts:415-422: runtime override → auth.json → env var → fallback). The auth file path resolves via `getAuthPath()` / `getAgentDir()` in `config.ts` (default `~/.pi/agent/auth.json`, respects `$PI_CODING_AGENT_DIR`). This automatically picks up `pi login`-installed credentials, hand-edited `api_key` entries, OAuth-token env vars (`ANTHROPIC_OAUTH_TOKEN`, etc.), and `models.json` custom-provider configs without the harness enumerating them.
 
 ### Ambiguities From User Model
 - Whether this suite runs in CI. **Resolution:** no. Unit + integration tests (faux provider) are CI-gated. Story 5's suite is a local/manual release gate. Documented in the protocol header.
@@ -52,9 +54,12 @@ Two artifacts land in this story:
   - At least one recorded green run (date, commit hash, per-scenario PASS, short observation list).
 - [ ] `packages/context-bonsai/test/e2e/run-e2e.sh` exists and:
   - Accepts `--scenario <A..G>` and `--all`.
-  - Exits with a clear error if `$BONSAI_E2E_API_KEY` (or the provider's standard env var) is missing.
+  - Gates scenario execution by calling out to a credential-discovery shim (see next AC) that delegates to Pi's `AuthStorage.hasAuth(provider)` per the per-agent spec's "E2E Credential Discovery" section. The harness MUST NOT fail-fast on missing env vars when `hasAuth(provider)` returns true; it MUST fail-fast with a deterministic error when `hasAuth(provider)` returns false, naming the auth-store path (`getAuthPath()` resolution including `$PI_CODING_AGENT_DIR` override hint), the harness override `BONSAI_E2E_API_KEY`, and the operator-actionable next step (`pi login <provider>` or set `BONSAI_E2E_API_KEY`).
+  - The harness MUST NOT invoke `pi login` automatically.
   - For each scenario: creates a fresh tmpdir, runs the prompt sequence, captures stdout per turn, asserts via `assert.mjs`, cleans up, prints `PASS` / `FAIL <reason>`.
   - Returns non-zero on any scenario failure; exit code for `--all` reflects the worst case.
+- [ ] Credential-discovery shim at `packages/context-bonsai/test/e2e/check-credentials.ts` (TypeScript, runnable via `tsx`) imports `AuthStorage` from the coding-agent workspace, applies `BONSAI_E2E_API_KEY` (when set) via `setRuntimeApiKey($BONSAI_E2E_PROVIDER, ...)`, calls `hasAuth($BONSAI_E2E_PROVIDER)`, and exits 0 (gate open) or 3 with the deterministic error message defined above. The harness shells out to this shim via `pi-test.sh` (so the workspace import resolves) or directly via `tsx`.
+- [ ] Credential discovery is covered by deterministic unit tests at `packages/context-bonsai/test/e2e-credentials.test.ts` using `AuthStorage.inMemory(...)` (auth-storage.ts:203) — no live LLM calls. Fixtures MUST cover at minimum: (i) `api_key`-shape entry for the configured provider → gate open; (ii) `oauth`-shape entry for the configured provider → gate open; (iii) entry-for-different-provider-only → gate closed with deterministic error; (iv) `BONSAI_E2E_API_KEY` runtime override only → gate open; (v) no source present → gate closed with deterministic error. Tests MUST NOT touch the real `~/.pi/agent/auth.json`.
 - [ ] `packages/context-bonsai/test/e2e/assert.mjs` exists and exposes matchers:
   - `eventStreamContainsTool(pathToLog, toolName) → boolean`
   - `eventStreamToolResult(pathToLog, toolName) → { isError, content }`
@@ -135,6 +140,8 @@ Each scenario starts from a fresh `mktemp -d -t pi-bonsai-XXXX` as `--session-di
 - `packages/context-bonsai/docs/e2e-testing.md`
 - `packages/context-bonsai/test/e2e/run-e2e.sh`
 - `packages/context-bonsai/test/e2e/assert.mjs`
+- `packages/context-bonsai/test/e2e/check-credentials.ts` — credential-discovery shim that delegates to `AuthStorage.hasAuth()`
+- `packages/context-bonsai/test/e2e-credentials.test.ts` — deterministic unit tests for the shim using `AuthStorage.inMemory(...)`
 - `packages/context-bonsai/test/e2e/scenarios/` (optional; per-scenario prompt fragments if the driver script grows unwieldy)
 
 ### Files Modified
@@ -153,9 +160,11 @@ Each scenario starts from a fresh `mktemp -d -t pi-bonsai-XXXX` as `--session-di
 ### Phase 2: Assertion helper
 - Implement `assert.mjs` using Node's built-in `node:fs` and a small JSONL reader. No third-party deps beyond what's already in the monorepo.
 
-### Phase 3: Driver script
-- `run-e2e.sh` dispatches per `--scenario`, composes prompt sequences, logs to per-scenario files under a run-specific tmpdir, and emits a final summary.
-- Require `BONSAI_E2E_PROVIDER` / `BONSAI_E2E_MODEL` env vars with sensible defaults; fail fast if the expected API-key env is unset.
+### Phase 3: Driver script + credential-discovery shim
+- Implement `test/e2e/check-credentials.ts` (TS shim) per the per-agent spec's "E2E Credential Discovery" section: import `AuthStorage` from `@mariozechner/pi-coding-agent` (or the relative workspace path), apply `BONSAI_E2E_API_KEY` (when set) via `setRuntimeApiKey($BONSAI_E2E_PROVIDER, ...)`, call `hasAuth($BONSAI_E2E_PROVIDER)`, exit 0 on gate-open or 3 with the deterministic error message.
+- Add deterministic unit tests at `test/e2e-credentials.test.ts` using `AuthStorage.inMemory(...)` covering at minimum the five fixture cases enumerated in the AC.
+- `run-e2e.sh` dispatches per `--scenario`, composes prompt sequences, logs to per-scenario files under a run-specific tmpdir, and emits a final summary. The credential-discovery gate uses the shim, NOT a hand-rolled env-var check.
+- Default `BONSAI_E2E_PROVIDER=anthropic` and `BONSAI_E2E_MODEL=claude-sonnet-4-6` if unset; both are operator-overridable.
 
 ### Phase 4: First full run
 - Set credentials. Execute `run-e2e.sh --all`. Capture the summary.
@@ -171,15 +180,16 @@ Each scenario starts from a fresh `mktemp -d -t pi-bonsai-XXXX` as `--session-di
 ## Step-by-Step Tasks
 
 1. Re-read `.agents/research/pi-e2e-interaction-baseline.md` end-to-end; bookmark the minimum-reproducible script in §6.
-2. Write `packages/context-bonsai/docs/e2e-testing.md` with Scenarios A–G.
-3. Implement `packages/context-bonsai/test/e2e/assert.mjs`.
-4. Implement `packages/context-bonsai/test/e2e/run-e2e.sh`.
-5. Add the `"e2e"` script entry in `package.json`.
-6. Export credentials; run `run-e2e.sh --scenario A` as a smoke check.
-7. Run `run-e2e.sh --all`. Record outcome.
-8. For every failure: diagnose, patch, add regression test, rerun. Iterate.
-9. When all seven PASS: update Test Runs with final date + commit hash. Run `npm run check`.
-10. Commit as `[Story 1.5] context-bonsai e2e protocol + green run`.
+2. Read the per-agent spec's "E2E Credential Discovery" section and `packages/coding-agent/src/core/auth-storage.ts` (esp. `AuthStorage.create`, `inMemory`, `setRuntimeApiKey`, `hasAuth` at lines 195, 203, 213, 324) so the shim and unit tests can mirror Pi's documented priority order.
+3. Implement `packages/context-bonsai/test/e2e/check-credentials.ts` (credential-discovery shim).
+4. Implement `packages/context-bonsai/test/e2e-credentials.test.ts` covering the five fixture cases.
+5. Update `packages/context-bonsai/test/e2e/run-e2e.sh` so its credential gate calls the shim instead of inspecting env vars directly. Remove the env-var-only fail-fast.
+6. Refresh `packages/context-bonsai/docs/e2e-testing.md`'s Prerequisites and Pre-flight Checks sections to describe credential discovery via `pi login` OR `BONSAI_E2E_API_KEY`, not env vars only.
+7. Confirm the `"e2e"` script entry in `package.json` is unchanged (Story P.5 iter 1 already added it).
+8. With credentials available (`pi login` for the configured provider, or `BONSAI_E2E_API_KEY` set): run `bash test/e2e/run-e2e.sh --scenario A` as smoke; then `--all`. Record outcomes.
+9. For every failure: diagnose, patch (extension bug → patch source + add regression test in P.1–P.4 suite; protocol bug → tighten assertion; Pi-surface gap → escalate), rerun. Iterate.
+10. When all seven PASS: update Test Runs with final date + commit hash. Run `npm run check`.
+11. Commit as `[Story P.5] context-bonsai e2e protocol + green run` (subject convention matches in-orchestration P.x prefix).
 
 ## Testing Strategy
 
@@ -189,24 +199,36 @@ Each scenario starts from a fresh `mktemp -d -t pi-bonsai-XXXX` as `--session-di
 
 ## Validation Commands
 
-- `cd /home/basil/projects/context-bonsai-pi && npm run check` — must stay green after any fix-loop patches.
-- `cd /home/basil/projects/context-bonsai-pi/packages/context-bonsai && BONSAI_E2E_PROVIDER=anthropic BONSAI_E2E_MODEL=claude-sonnet-4-6 bash test/e2e/run-e2e.sh --scenario A` — smoke.
-- `cd /home/basil/projects/context-bonsai-pi/packages/context-bonsai && BONSAI_E2E_PROVIDER=anthropic BONSAI_E2E_MODEL=claude-sonnet-4-6 bash test/e2e/run-e2e.sh --all` — full suite; must exit 0 before the story is complete.
+Authoritative paths use the submodule working tree `/home/basil/projects/context-bonsai-agents/pi/...`. The original plan referenced a sibling clone at `/home/basil/projects/context-bonsai-pi/...`; orchestration uses the submodule.
+
+- `cd /home/basil/projects/context-bonsai-agents/pi && npm run check` — must stay green after any fix-loop patches; covers the credential-discovery unit tests.
+- `cd /home/basil/projects/context-bonsai-agents/pi/packages/context-bonsai && BONSAI_E2E_PROVIDER=anthropic BONSAI_E2E_MODEL=claude-sonnet-4-6 bash test/e2e/run-e2e.sh --scenario A` — smoke (requires `hasAuth(anthropic)` to be true via `pi login` or `BONSAI_E2E_API_KEY`).
+- `cd /home/basil/projects/context-bonsai-agents/pi/packages/context-bonsai && BONSAI_E2E_PROVIDER=anthropic BONSAI_E2E_MODEL=claude-sonnet-4-6 bash test/e2e/run-e2e.sh --all` — full suite; must exit 0 before the story is complete.
 
 ## Worktree Artifact Check
 
-- Checked At: 2026-05-06
-- Planned Target Files: `packages/context-bonsai/docs/e2e-testing.md`, `packages/context-bonsai/test/e2e/run-e2e.sh`, `packages/context-bonsai/test/e2e/assert.mjs`, `packages/context-bonsai/test/e2e/scenarios/`, `packages/context-bonsai/package.json` (modified), regression-test files discovered during the fix loop.
-- Overlaps Found: `packages/context-bonsai/package.json` modified relative to Story 1 (in-epic). Fix-loop regression tests may touch prior stories' test directories (in-epic).
-- Escalation Status: none (in-epic modifications are not escalation triggers).
-- Decision Citation: n/a
+- Checked At: 2026-05-07 (amendment)
+- Planned Target Files (after 2026-05-07 amendment):
+  - `packages/context-bonsai/docs/e2e-testing.md` (modified — Prerequisites + Pre-flight Checks updated to describe credential discovery)
+  - `packages/context-bonsai/test/e2e/run-e2e.sh` (modified — credential gate replaced with shim call)
+  - `packages/context-bonsai/test/e2e/assert.mjs` (existing; unchanged unless fix-loop requires)
+  - `packages/context-bonsai/test/e2e/check-credentials.ts` (new — credential-discovery shim)
+  - `packages/context-bonsai/test/e2e-credentials.test.ts` (new — unit tests for the shim)
+  - `packages/context-bonsai/package.json` (existing `"e2e"` script unchanged unless fix-loop requires)
+  - regression-test files discovered during the fix loop (any of `packages/context-bonsai/test/*.test.ts` or `packages/coding-agent/test/suite/context-bonsai/*.test.ts`).
+- Overlaps Found:
+  - `packages/context-bonsai/test/e2e/run-e2e.sh` is `tracked-dirty` if the iter-1 dev artifacts at pi HEAD `b9a7c612` are kept, since this iteration replaces its credential gate; treat as in-epic continuation, not a fresh overlap.
+  - `packages/context-bonsai/docs/e2e-testing.md`: same — in-epic continuation.
+  - The new `check-credentials.ts` and `e2e-credentials.test.ts` paths are not present at pi HEAD; verify they are `existing-untracked` at the start of the iteration and clear them if so.
+- Escalation Status: none (in-epic continuation; no out-of-scope artifacts).
+- Decision Citation: user authorization 2026-05-07 "fix the spec, then update the plans … then start orchestrating the changes needed to complete e2e".
 
 ## Plan Approval and Commit Status
 
 - Approval Status: approved
-- Approval Citation: user message 2026-04-23 "Do commit the plan" (auto mode)
-- Plan Commit Hash: 45df8a33 (`docs: approved plans for context-bonsai port epic`)
-- Ready-for-Orchestration: yes (orchestration deferred per user instruction in same exchange)
+- Approval Citation: user message 2026-04-23 "Do commit the plan" (auto mode); amendment authorized 2026-05-07 ("fix the spec, then update the plans to fix run-e2e.sh and whatever else … if you successfully finish the loop with updating the spec/plans and getting approvals from the sub-agents, then consider it approved")
+- Plan Commit Hash: 45df8a33 (`docs: approved plans for context-bonsai port epic`); amendment commit hash recorded at amendment time
+- Ready-for-Orchestration: yes
 
 ## Completion Checklist
 
