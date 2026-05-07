@@ -1,0 +1,72 @@
+{
+  "title": "Completed task transition prune",
+  "session_id": "ses_34085bcceffeZAypnm3QQK0gHf",
+  "use_case": "Prune a finished implementation segment before moving on to the next task, while preserving the few facts needed in working memory.",
+  "entries": [
+    {
+      "message_id": "msg_ce960736c001tj1XaRj6o32rov",
+      "part_id": "prt_ce960736c002YQBjXrp1p3vDKj",
+      "timestamp_ms": 1773441938303,
+      "role": "user",
+      "type": "text",
+      "text": "Try using that image with the poisson method"
+    },
+    {
+      "message_id": "msg_ce961bf9b001Y5cFIngB48c6Dv",
+      "part_id": "prt_ce961bf9b002qtN6HzIZQmWTNL",
+      "timestamp_ms": 1773442023342,
+      "role": "user",
+      "type": "text",
+      "text": "Whatever you're doing, it's wrong. You should not need to run multiple commands and you should not be supplying a giant argument at the command line. We specifically implemented somethign that directly generates png"
+    },
+    {
+      "message_id": "msg_ce961c290001E78wtwebp5EQXP",
+      "part_id": "prt_ce961e4020012iEmwm5uhMb5CK",
+      "timestamp_ms": 1773442032642,
+      "role": "assistant",
+      "type": "reasoning",
+      "visibility": "internal",
+      "text": "**Pruning large obsolete chunk**"
+    },
+    {
+      "message_id": "msg_ce961c290001E78wtwebp5EQXP",
+      "part_id": "prt_ce962068a0018rj0XDbrT4nmn9",
+      "timestamp_ms": 1773442041482,
+      "role": "assistant",
+      "type": "internal_note",
+      "visibility": "internal",
+      "text": "I need to remember:\n- You expect me to use the direct PNG-capable flow we implemented, without giant ad-hoc argument lists.\n- For this request, you want the Poisson result from `samples/banana_low_key.png` using that intended streamlined path."
+    },
+    {
+      "message_id": "msg_ce961c290001E78wtwebp5EQXP",
+      "part_id": "prt_ce9620985001rOKK0M0Wuh1Hb2",
+      "timestamp_ms": 1773442042245,
+      "role": "assistant",
+      "type": "tool_call",
+      "tool": "context-bonsai-prune",
+      "status": "completed",
+      "input": {
+        "from_pattern": "Next, we want to implement another method - the autorouter method. First, generate a plan by following ./.llm-conductor/planning_guidance.md",
+        "to_pattern": "Try using that image with the poisson method",
+        "summary": "Archived the autorouter planning and implementation segment plus banana image generation tests. This included creating and validating the autorouter plan, orchestrating implementation/review/judge cycles, and generating both autorouter and poisson outputs for `samples/banana_low_key.png`. Active context now is correcting command usage to the intended direct PNG flow with streamlined invocation.",
+        "index_terms": [
+          "autorouter-plan",
+          "orchestration",
+          "poisson-vs-autorouter",
+          "banana-sample",
+          "png-output",
+          "command-usage-correction"
+        ]
+      },
+      "output": "Archived 39 messages from pattern \"Next, we want to implement another method - the autorouter method. First, generate a plan by following ./.llm-conductor/planning_guidance.md\" (resolved to msg_ce85f1cbe001MSWFKOZHySOwf5) to pattern \"Try using that image with the poisson method\" (resolved to msg_ce960736c001tj1XaRj6o32rov).\nSummary: Archived the autorouter planning and implementation segment plus banana image generation tests. This included creating and validating the autorouter plan, orchestrating implementation/review/judge cycles, and generating both autorouter and poisson outputs for `samples/banana_low_key.png`. Active context now is correcting command usage to the intended direct PNG flow with streamlined invocation.\nIndex terms: autorouter-plan, orchestration, poisson-vs-autorouter, banana-sample, png-output, command-usage-correction"
+    },
+    {
+      "message_id": "msg_ce9622709001YWIXNvReqt6bAn",
+      "part_id": "prt_ce9624a23001q0L61Pvgl5syCU",
+      "timestamp_ms": 1773442058787,
+      "role": "assistant",
+      "type": "text",
+      "text": "You’re right — that was the wrong style.\n\nI should use the intended direct PNG flow, concise and minimal, not a huge hand-built command.\n\nI’ll follow that pattern from here."
+    }
+  ]
+}
