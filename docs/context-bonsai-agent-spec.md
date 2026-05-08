@@ -65,6 +65,24 @@ When host-core changes are required, the implementation plan SHOULD:
 - `unresolved task marker`: content indicating work is still in progress and should normally remain in context.
 - `usable budget`: context budget available for active transcript content after reserving headroom for model output.
 
+## User Model
+
+The gamuts below name representative users and needs that the spec — and in particular the Operator Documentation Contract — is meant to serve. The lists are illustrative, not exhaustive.
+
+### User Gamut
+
+- Senior security engineer auditing what the install touches and what data leaves the box.
+- Non-developer creator (PM, designer, hobbyist) building software through coding agents — runs commands when shown them step-by-step but does not already know `git clone` / `npm install` / equivalents on their own. The docs must teach the moves.
+- Existing developer adopter who knows the terminal but is new to Context Bonsai.
+
+### User-Needs Gamut
+
+- Reproducibility on a clean machine without prior project context.
+- Concrete copy-paste commands for each platform the port supports.
+- A post-install verification step that confirms bonsai is wired in (e.g., a smoke prompt plus expected response shape).
+- Security disclosure: what data the extension reads, where state persists, what is transmitted to the LLM provider (placeholder summary and index terms YES; archived original content NO), and any network egress the extension initiates separately from the host.
+- Uninstall procedure that returns the host to its pre-install state.
+
 ## Required User Outcomes
 
 - The agent can prune stale conversation history without losing recoverability.
@@ -291,6 +309,18 @@ An implementation MUST document the policy envelope of its host and provider set
 - Required patch or hook discovery MUST fail closed when the host runtime changes and the insertion point can no longer be identified reliably.
 - Unsupported runtime states MUST not silently no-op when the model believes pruning succeeded.
 
+## Operator Documentation Contract
+
+Every Context Bonsai port MUST ship operator-facing documentation that lets a user from the User Gamut install, verify, audit, and uninstall the port on a clean machine. Ports MAY choose their own document structure; the categories below are content requirements, not section-name requirements.
+
+The documentation MUST cover:
+
+- **Prerequisites**: host agent version, runtime/toolchain versions, OS support matrix, and any accounts or credentials the user must already have.
+- **Install commands**: concrete copy-paste commands for each platform the port supports, sufficient for a user who does not already know `git clone` / `npm install` / equivalents to follow them step-by-step.
+- **Post-install verification**: a positive check the user can run that confirms bonsai is wired into the host (for example, a smoke prompt plus the expected response shape, or a tool-listing command that should show `context-bonsai-prune` and `context-bonsai-retrieve`).
+- **Security disclosure**: what data the extension reads from the host transcript or session store, where archive state persists on disk, what is transmitted to the LLM provider (placeholder summary and index terms YES; archived original content NO), and any network egress the port initiates separately from the host agent.
+- **Uninstall**: a procedure that returns the host to its pre-install state, including removal of any persisted archive state created by the port.
+
 ## Invariants
 
 - Archive and retrieve operations are model-visible all-or-nothing.
@@ -359,3 +389,4 @@ Each concrete implementation plan should derive from this spec and normally prod
 - a parity scenario doc
 - an e2e validation protocol
 - an implementation roadmap with explicit capability mapping and failure semantics
+- an operator install/usage doc satisfying the Operator Documentation Contract
