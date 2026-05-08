@@ -68,6 +68,85 @@
       "output": "375dba3 [Story RBO-1] Map overlay background read failures to invalid-input\n5c6331b [Story RBO-1] Add background overlay PNG render mode\n24fc30f [Story B3] Add imprint overlay diagnostics and regression checks\n"
     },
     {
+      "message_id": "msg_d0204bb32001Rud1qf9VPPXNs0",
+      "part_id": "prt_d0204ce2e001MB3Wa3ckD3MiYg",
+      "timestamp_ms": 1773855362607,
+      "role": "assistant",
+      "type": "reasoning",
+      "visibility": "internal",
+      "text": "**Considering commit details display**"
+    },
+    {
+      "message_id": "msg_d0204bb32001Rud1qf9VPPXNs0",
+      "part_id": "prt_d0204d77f0012pJD5S7ooz2yS8",
+      "timestamp_ms": 1773855364991,
+      "role": "assistant",
+      "type": "tool_call",
+      "tool": "bash",
+      "status": "completed",
+      "input": {
+        "command": "git show --stat --name-only 5c6331b",
+        "workdir": "/home/basil/projects/Img-to-maze",
+        "description": "Shows files changed for overlay PNG mode commit"
+      },
+      "output": "commit 5c6331b2cca77d8d009ee91bcb2596a049178263\nAuthor: Basil Goff <shawn7400@gmail.com>\nDate:   Wed Mar 11 12:35:58 2026 -0700\n\n    [Story RBO-1] Add background overlay PNG render mode\n\nREADME.md\nfixtures/renders/hash-baseline.json\nscripts/render/update-hash.ts\nsrc/cli.ts\nsrc/render/png.ts\ntests/render/png.test.ts\n"
+    },
+    {
+      "message_id": "msg_d0204bb32001Rud1qf9VPPXNs0",
+      "part_id": "prt_d0204d782001FXKdO2qtlqDex2",
+      "timestamp_ms": 1773855364994,
+      "role": "assistant",
+      "type": "tool_call",
+      "tool": "bash",
+      "status": "completed",
+      "input": {
+        "command": "git show --stat --name-only 375dba3",
+        "workdir": "/home/basil/projects/Img-to-maze",
+        "description": "Shows files changed for overlay error handling commit"
+      },
+      "output": "commit 375dba3dd36b6a48f45400cf48f181230a5a59eb\nAuthor: Basil Goff <shawn7400@gmail.com>\nDate:   Wed Mar 11 12:42:55 2026 -0700\n\n    [Story RBO-1] Map overlay background read failures to invalid-input\n\nsrc/cli.ts\ntests/render/png.test.ts\n"
+    },
+    {
+      "message_id": "msg_d0204e4eb001dKUJZ6UoF4P3yt",
+      "part_id": "prt_d02050751001SY7qQZJsN9dO6l",
+      "timestamp_ms": 1773855377233,
+      "role": "assistant",
+      "type": "reasoning",
+      "visibility": "internal",
+      "text": "**Checking CLI background option**"
+    },
+    {
+      "message_id": "msg_d0204e4eb001dKUJZ6UoF4P3yt",
+      "part_id": "prt_d02050b01001O9QQes6XtXEM1Q",
+      "timestamp_ms": 1773855378177,
+      "role": "assistant",
+      "type": "tool_call",
+      "tool": "grep",
+      "status": "completed",
+      "input": {
+        "pattern": "background|overlay",
+        "path": "/home/basil/projects/Img-to-maze/src/cli.ts"
+      },
+      "output": "Found 30 matches\n/home/basil/projects/Img-to-maze/src/cli.ts:\n  Line 25: } from \"./imprint/overlay\";\n  Line 99: \toverlay?: string;\n  Line 123: \toverlayWhitePaths?: boolean;\n  Line 124: \tbackgroundImage?: string;\n  Line 339: \t\tif (options.dryRun || options.dump || options.overlay || options.trace) {\n  Line 341: \t\t\t\t\"invalid-method: --dry-run, --dump, --overlay, and --trace are only supported for legacy imprint methods\",\n  Line 364: \t\tif (options.dryRun || options.dump || options.overlay || options.trace) {\n  Line 366: \t\t\t\t\"invalid-method: --dry-run, --dump, --overlay, and --trace are only supported for legacy imprint methods\",\n  Line 966: \tif (options.overlay) {\n  Line 967: \t\tconst overlaySvg = renderImprintOverlaySvg({\n  Line 973: \t\tawait mkdir(path.dirname(options.overlay), { recursive: true });\n  Line 974: \t\tawait Bun.write(options.overlay, overlaySvg);\n  Line 1269: \tconst overlayWhitePaths = options.overlayWhitePaths ?? false;\n  Line 1270: \tconst backgroundImage = options.backgroundImage?.trim();\n  Line 1272: \tif (overlayWhitePaths && !backgroundImage) {\n  Line 1274: \t\t\t\"invalid-input: --overlay-white-paths requires --background-image <path>\",\n  Line 1279: \tif (backgroundImage && !overlayWhitePaths) {\n  Line 1281: \t\t\t\"invalid-input: --background-image requires --overlay-white-paths\",\n  Line 1286: \tif (overlayWhitePaths && exportFormat !== \"png\") {\n  Line 1288: \t\t\t\"invalid-input: --overlay-white-paths requires --export png\",\n  Line 1301: \t\tlegend: overlayWhitePaths ? false : options.legend,\n  Line 1320: \t\tif (overlayWhitePaths) {\n  Line 1324: \t\t\t\t\tbackgroundImage: backgroundImage ?? \"\",\n  Line 1330: \t\t\t\t\t\t: \"unknown overlay render error\";\n  Line 1363: \t\t\t\toverlays: report.overlays.length,\n  Line 1449: \t\t.option(\"--overlay <path>\", \"Output overlay SVG path\")\n  Line 1496: \t\t\t\"--overlay-white-paths\",\n  Line 1497: \t\t\t\"Composite white corridor paths over a background image (PNG export only)\",\n  Line 1500: \t\t\t\"--background-image <path>\",\n  Line 1501: \t\t\t\"Background image path used with --overlay-white-paths\","
+    },
+    {
+      "message_id": "msg_d02051de6001KY0QDrOCTiyBna",
+      "part_id": "prt_d0205346d0017vASpJt2PGC603",
+      "timestamp_ms": 1773855388782,
+      "role": "assistant",
+      "type": "reasoning",
+      "visibility": "internal",
+      "text": "**Planning terse response format**"
+    },
+    {
+      "message_id": "msg_d02051de6001KY0QDrOCTiyBna",
+      "part_id": "prt_d02053531001ujKyGZzCgt4d56",
+      "timestamp_ms": 1773855388977,
+      "role": "assistant",
+      "type": "text",
+      "text": "Yes — you’re right, that was implemented.\n\nI found these commits:\n\n- `5c6331b` `[Story RBO-1] Add background overlay PNG render mode`\n- `375dba3` `[Story RBO-1] Map overlay background read failures to invalid-input`\n\nAnd the CLI supports it via:\n\n- `--overlay-white-paths`\n- `--background-image <path>`\n- (requires `--export png`)\n\nSo the expected command pattern is:\n\n`bun run src/cli.ts render --input <maze.json> --theme ink --export png --overlay-white-paths --background-image <source-image> --out <output-base>`"
+    },
+    {
       "message_id": "msg_d0205fbc1001XovfXwRNUSOlJY",
       "part_id": "prt_d0205fbc1002V59SwdDkXu3ryA",
       "timestamp_ms": 1773855439814,
