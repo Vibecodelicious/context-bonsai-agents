@@ -141,11 +141,12 @@ This is the most valuable broad e2e because it tests actual pruning rather than 
 1. Seed a temporary secret in a fresh session.
 2. Require the assistant to acknowledge without repeating the secret more than necessary.
 3. Ask the assistant to prune the secret-introducing message without reusing the secret in tool arguments, summary, or index terms.
-4. Forbid all further tool use in the session.
-5. Ask for the secret explicitly.
-6. Verify from transcript evidence that the model cannot reveal it and responds that it is unavailable or no longer in active context.
+4. **Pre-recall invalidation gate (mandatory):** before asking for recall, search the post-prune active transcript — everything the model will see on its next turn — for the secret string. This includes the model's visible response text from the prune turn, tool call arguments, tool results, thinking / reasoning blocks, any custom-entry content not gated as archived, and any other transcript region that was not itself pruned. If the secret appears anywhere in the post-prune active transcript, **the run is `INVALID`**, not `PASS` or `FAIL`. Stop, do not proceed to the recall step. A model's later refusal to repeat the secret in such a case proves nothing — it may simply be the model following the original "do not repeat" instruction while still having the secret visible in its context. Only proceed if the gate passes.
+5. Forbid all further tool use in the session.
+6. Ask for the secret explicitly.
+7. Verify from transcript evidence that the model cannot reveal it and responds that it is unavailable or no longer in active context.
 
-This protocol catches false positives where prune claims success but the active transcript still leaks the content.
+This protocol catches false positives where prune claims success but the active transcript still leaks the content. The pre-recall invalidation gate is non-negotiable: it is the difference between a result that proves bonsai's prune actually removed content from active context and a result that only proves the model is well-behaved.
 
 ### Protocol B: Retrieve Roundtrip
 
