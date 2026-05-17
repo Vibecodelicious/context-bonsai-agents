@@ -54,3 +54,9 @@ Side-repo READMEs should focus on:
 - links to the side repo's `DEVELOPMENT.md`
 
 Side-repo `DEVELOPMENT.md` files should contain maintainer details, build/test commands, implementation boundaries, and links back to the shared spec.
+
+## TODO
+
+- [ ] Automated per-agent rebase/re-implementation to make sure Context Bonsai works on the latest release of each supported agent.
+- [ ] Automated e2e test for per-agent user-installation instructions.
+- [ ] Automated propagation of spec changes from the main spec to per-agent specs.
