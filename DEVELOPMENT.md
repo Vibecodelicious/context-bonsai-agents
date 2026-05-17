@@ -60,3 +60,4 @@ Side-repo `DEVELOPMENT.md` files should contain maintainer details, build/test c
 - [ ] Automated per-agent rebase/re-implementation to make sure Context Bonsai works on the latest release of each supported agent.
 - [ ] Automated e2e test for per-agent user-installation instructions.
 - [ ] Automated propagation of spec changes from the main spec to per-agent specs.
+- [ ] Submodule `opencode_context_bonsai_plugin` — clean commit history rewrite.
