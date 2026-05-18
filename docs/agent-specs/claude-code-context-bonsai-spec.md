@@ -2,15 +2,15 @@
 
 ## Purpose
 
-This document specializes the shared Context Bonsai contract for Anthropic's Claude Code (the CLI / IDE agent host). Unlike the other four ports, Claude Code is closed-source — there is no agent repo to fork or patch. The integration surface is exclusively MCP plus optional source-patching of the locally-installed Claude Code binary via the [`tweakcc`](https://github.com/Piebald-AI/tweakcc) Piebald-AI fork. The bonsai implementation lives in the [`tweakcc_context_bonsai/`](/home/basil/projects/context-bonsai-agents/tweakcc_context_bonsai) side repo (the `ccsnap` CLI plus the `context-bonsai` MCP server).
+This document specializes the shared Context Bonsai contract for Anthropic's Claude Code (the CLI / IDE agent host). Unlike the other four ports, Claude Code is closed-source — there is no agent repo to fork or patch. The integration surface is MCP plus a transcript-rewrite seam in the locally-installed Claude Code binary via [`tweakcc`](https://github.com/Piebald-AI/tweakcc), or an equivalent seam. The bonsai implementation lives in the [`tweakcc_context_bonsai/`](/home/basil/projects/context-bonsai-agents/tweakcc_context_bonsai) side repo (the `ccsnap` CLI plus the `context-bonsai` MCP server).
 
 ## User Model
 
 ### User Gamut
 
 - Claude Code CLI users in long terminal/IDE sessions
-- Users who can install MCP servers via `~/.claude/settings.json` but cannot modify Claude Code itself
-- Users willing to apply the optional tweakcc patch for higher-fidelity transcript rendering
+- Users who can install MCP servers via `~/.claude/settings.json` and can apply a local transcript-rewrite seam to Claude Code
+- Users who need the tweakcc patch, or an equivalent seam, for the context-reduction guarantee
 - Operators relying on Claude Code's session JSONL exports for resumption and audit
 
 ### User-Needs Gamut
@@ -19,7 +19,7 @@ This document specializes the shared Context Bonsai contract for Anthropic's Cla
 - Archive metadata that survives session reload, restart, and `claude --resume`
 - Pattern-matching that reaches tool-call name, args, and output (per Pattern Matching Contract bullet 1, MUST since commit `9f1ca61`)
 - Fail-closed behavior when the JSONL session file cannot be located or written
-- Optional tweakcc patches for placeholder-rendering and gauge UI; functionality without the patches must still be correct (just less polished)
+- A required transcript-rewrite seam that ensures archived follower messages are removed from the model-facing transcript
 
 ### Ambiguities From User Model
 
@@ -35,7 +35,7 @@ This document specializes the shared Context Bonsai contract for Anthropic's Cla
 | Session discovery from MCP | Verified | `/proc/<pid>` walk finds the parent Claude Code process; cmdline contains `--resume <session-id>` (see `src/lib/session.ts`) |
 | In-band gauge | Partial | No public token-budget API. tweakcc patch can read internal state; otherwise gauge is delivered only as text inside prune/retrieve tool responses |
 | System-guidance injection | Gap | No MCP-side system-prompt API. Tool descriptions are the only model-visible MCP-controlled text |
-| Transcript mutation | Verified (with caveat) | The MCP server can rewrite the JSONL on disk to insert placeholder messages and mark archived ranges. The optional tweakcc `archivedFilter` patch hides archived ranges in the live transcript view |
+| Transcript mutation | Verified (with caveat) | The MCP server can rewrite the JSONL on disk to insert placeholder messages and mark archived ranges. A transcript-rewrite seam, currently the tweakcc `archivedFilter` patch or an equivalent, is required to hide archived ranges in the live transcript view |
 | Archive persistence across resume | Verified | Archive marker file at `~/.claude/archived-<session-id>.json` is read by tweakcc's `archivedFilter` on session reload |
 
 ## Verified Host Primitives
@@ -43,7 +43,7 @@ This document specializes the shared Context Bonsai contract for Anthropic's Cla
 - MCP server registration: `~/.claude/settings.json` `mcpServers.context-bonsai.{command,args}` — stdio MCP transport; tool names exposed as `mcp__context-bonsai__context-bonsai-prune` / `mcp__context-bonsai__context-bonsai-retrieve` per Claude Code's MCP-prefix convention.
 - Session JSONL location: `~/.claude/projects/<project-hash>/<session-id>.jsonl`. Each line is one of `{ type: "user" | "assistant" | "summary", uuid, parentUuid, timestamp, message?, summary?, ... }`. See `tweakcc_context_bonsai/src/types.ts` for the canonical `SessionMessage` union.
 - Process discovery: `/proc/<pid>` walk from the MCP server's parent process up the chain, parsing `cmdline` for `--resume <session-id>` to identify the live Claude Code session. See `tweakcc_context_bonsai/src/lib/session.ts:findCurrentSession` and `findSessionPath`.
-- Archive marker file: `~/.claude/archived-<session-id>.json` — written by `addArchivedMarkerEntries` in `tweakcc_context_bonsai/src/lib/compact.ts`. Read by the optional tweakcc `archivedFilter` patch to hide archived ranges in the live transcript.
+- Archive marker file: `~/.claude/archived-<session-id>.json` — written by `addArchivedMarkerEntries` in `tweakcc_context_bonsai/src/lib/compact.ts`. Read by the required transcript-rewrite seam to hide archived ranges in the live transcript.
 
 ## Unverified Or Weak Areas
 
@@ -57,20 +57,21 @@ This document specializes the shared Context Bonsai contract for Anthropic's Cla
 ### Required architecture stance
 
 - Claude Code Context Bonsai MUST be MCP-first. There is no agent-repo to mirror; the MCP server is the only authoritative integration seam.
-- The optional tweakcc patches (applied via `npx tweakcc --apply`) are RECOMMENDED but not required. The MCP server's behavior MUST be correct without the patches — the patches only improve placeholder-rendering fidelity and surface the gauge UI.
-- All bonsai logic lives in the side repo (`tweakcc_context_bonsai`); Claude Code itself is never modified.
+- A transcript-rewrite seam is REQUIRED for the context-reduction guarantee in the shared spec: after prune, archived follower messages must be omitted from the next model-facing transcript. The current seam is the tweakcc `archivedFilter` patch; an equivalent seam may satisfy the same requirement.
+- The MCP server alone is not sufficient to guarantee context reduction. When the required seam is absent or cannot be verified, prune MUST fail closed with a deterministic plain-text error and MUST NOT write archive state.
+- All bonsai logic lives in the side repo (`tweakcc_context_bonsai`); the local Claude Code install is modified only at the minimal transcript-rewrite seam needed to satisfy the shared spec.
 
 ### Prune and retrieve contract
 
 - Tool names: `context-bonsai-prune` and `context-bonsai-retrieve`, surfaced through MCP as `mcp__context-bonsai__context-bonsai-prune` and `mcp__context-bonsai__context-bonsai-retrieve` respectively (Claude Code's standard MCP-prefix format).
-- Archive metadata MUST persist to `~/.claude/archived-<session-id>.json` so that tweakcc's `archivedFilter` patch (when applied) can hide archived ranges across session reloads.
+- Archive metadata MUST persist to `~/.claude/archived-<session-id>.json` so that the transcript-rewrite seam can hide archived ranges across session reloads.
 - Per shared spec Pattern Matching Contract, the prune-wrapper filter on the ambiguity path MUST be implemented in `tweakcc_context_bonsai/mcp-server/index.ts` `loadSearchableMessages` / `resolveUniqueBoundary`. The current implementation flags messages whose `tool_use` block has `name === "context-bonsai-prune"` or `name === "mcp__context-bonsai__context-bonsai-prune"` and excludes them from the candidate set on ambiguity (see the_observer's `prune-call-filtering` story).
 - Per shared spec Pattern Matching Contract bullet 1 (MUST since commit `9f1ca61`), `loadSearchableMessages` MUST include each tool call's name, input, and output in the searchable text. Claude Code's JSONL stores `tool_use` blocks with `{ id, name, input }` and `tool_result` blocks with `{ tool_use_id, content }`; the MCP server's `searchableText` walker MUST surface all three (name, input, output content) so pattern matching can target tool-call payloads — see `tweakcc_context_bonsai/mcp-server/index.ts` `searchableText`.
 
 ### Transcript mutation path
 
 - The MCP server rewrites the live JSONL to insert a placeholder `summary`-typed entry replacing the archived range. See `markMessagesArchived` and `addArchivedMarkerEntries` in `tweakcc_context_bonsai/src/lib/compact.ts`.
-- Without the tweakcc `archivedFilter` patch, the original archived `tool_use`/`tool_result` blocks remain in the JSONL and are visible in subsequent transcript loads. With the patch, they are hidden from the live transcript view.
+- Without the transcript-rewrite seam, the original archived `tool_use`/`tool_result` blocks remain in the JSONL and are visible in subsequent transcript loads; prune must therefore fail closed before writing archive state. With the seam, they are hidden from the live transcript view.
 - Atomic writes use `writeJsonlAtomic` (temp-file + rename). Claude Code's append-during-mutation race is mitigated by performing mutations only during MCP tool calls (when the model is paused).
 
 ### System guidance path
@@ -88,6 +89,7 @@ This document specializes the shared Context Bonsai contract for Anthropic's Cla
 
 - If the session JSONL cannot be located (no `/proc/<pid>` match, no `~/.claude/projects/.../<session-id>.jsonl`), the MCP tool MUST return a structured error and refuse to mutate.
 - If the JSONL schema does not match the expected `SessionMessage` shape (e.g. major Claude Code version drift), the MCP tool MUST refuse to mutate and return a "compatibility error" per the cross-agent spec §"Compatibility error".
+- If the transcript-rewrite seam is absent or cannot be verified, the prune tool MUST return a deterministic plain-text error and MUST NOT write `~/.claude/archived-<session-id>.json` or mutate the session JSONL.
 - If `~/.claude/archived-<session-id>.json` cannot be written (filesystem permissions, disk full), the MCP tool MUST roll back any partial JSONL mutation and return an error.
 - Pattern ambiguity, after the prune-wrapper filter, MUST return the deterministic plain-text error verbatim per the cross-agent spec.
 
@@ -99,9 +101,9 @@ This document specializes the shared Context Bonsai contract for Anthropic's Cla
 
 ## Specified Implementation Direction
 
-- Preferred: MCP server in `tweakcc_context_bonsai/` ships standalone; tweakcc patch is a documented optional companion.
-- Acceptable: shipping without the tweakcc patch but documenting reduced placeholder-rendering fidelity and out-of-band gauge.
-- Not acceptable: depending on a tweakcc patch as a hard requirement; the MCP server alone must be functionally complete for prune/retrieve.
+- Preferred: MCP server in `tweakcc_context_bonsai/` plus the tweakcc transcript-rewrite patch, with prune guarded by patch-presence verification.
+- Acceptable: replacing the tweakcc patch with an equivalent transcript-rewrite seam that satisfies the shared spec's placeholder and follower-omission requirements.
+- Not acceptable: shipping prune as successful when no transcript-rewrite seam is present; that silently leaves archived content in the model-facing transcript.
 
 ## E2E Priorities
 
@@ -121,4 +123,4 @@ See `tweakcc_context_bonsai/docs/e2e-protocol.md` for the canonical step-by-step
 - [tweakcc_context_bonsai/src/types.ts](/home/basil/projects/context-bonsai-agents/tweakcc_context_bonsai/src/types.ts) — `SessionMessage`, `CompactMetadata`, `SummaryMessage`
 - [tweakcc_context_bonsai/CC_BONSAI.md](/home/basil/projects/context-bonsai-agents/tweakcc_context_bonsai/CC_BONSAI.md), [PRD_CONTEXT_BONSAI_V2.md](/home/basil/projects/context-bonsai-agents/tweakcc_context_bonsai/PRD_CONTEXT_BONSAI_V2.md) — full design spec
 - [tweakcc_context_bonsai/docs/e2e-protocol.md](/home/basil/projects/context-bonsai-agents/tweakcc_context_bonsai/docs/e2e-protocol.md) — end-to-end validation procedure
-- [tweakcc Piebald-AI fork](https://github.com/Piebald-AI/tweakcc) — optional companion patch for placeholder-rendering and gauge UI
+- [tweakcc](https://github.com/Piebald-AI/tweakcc) — patching tool used to provide the required transcript-rewrite seam

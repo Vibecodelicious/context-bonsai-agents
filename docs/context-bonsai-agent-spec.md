@@ -315,7 +315,9 @@ An implementation MUST document the policy envelope of its host and provider set
 
 - If direct tool registration or transcript mutation triggers provider policy problems, the implementation MUST choose a policy-safe transport.
 - Policy workarounds are acceptable if the model-visible contract remains intact.
+- Required patch or hook insertion-point discovery MUST be resilient when host code can change between releases: use multiple matching strategies where practical, score candidates with explicit disambiguation rules, and self-verify after application that the intended change landed exactly as required.
 - Required patch or hook discovery MUST fail closed when the host runtime changes and the insertion point can no longer be identified reliably.
+- Resilient discovery complements, and does not supersede, the fail-closed requirement: if discovery is still missing, ambiguous, or cannot be self-verified, the implementation MUST refuse to proceed.
 - Unsupported runtime states MUST not silently no-op when the model believes pruning succeeded.
 
 ## Operator Documentation Contract
@@ -385,7 +387,7 @@ Before writing an implementation plan, identify:
 - whether direct tool registration is allowed by the provider and host policy
 - how session reload or resume works
 - whether message ids are stable, synthetic, absent, or branch-relative
-- what fail-closed path will be used if a required hook or patch point disappears
+- how required hook or patch-point discovery will be made resilient, and what fail-closed path will be used if discovery fails or cannot be self-verified
 - which required bonsai capabilities can live entirely plugin-side or MCP-side, and which cannot
 - the smallest upstream or host-core seam that would be needed if plugin-side delivery proves insufficient
 
