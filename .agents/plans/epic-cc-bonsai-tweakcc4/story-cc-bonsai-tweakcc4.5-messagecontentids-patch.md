@@ -91,7 +91,7 @@ Examples only:
 
 ## Step-by-Step Tasks
 
-1. Read the reference patch; confirm the marker contract in `mcp-server/index.ts`.
+1. Confirm the marker contract in `mcp-server/index.ts` and derive the converter behavior from the epic contracts, committed fixtures, current code, and validation artifacts available in this worktree.
 2. Implement `message-content-ids.patch.ts` as a `BonsaiPatch` using `discovery`.
 3. Build the `_tag` helper and the `compaction-mode`-gated converter wrapper.
 4. Append the `/*cb:message-content-ids:v1*/` sentinel; self-verify.

@@ -93,7 +93,7 @@ Examples only:
 
 ## Step-by-Step Tasks
 
-1. Read the reference patch and the `compact.ts` marker helpers.
+1. Read the `compact.ts` marker helpers and derive the filter behavior from the epic contracts, committed fixtures, current code, and validation artifacts available in this worktree.
 2. Implement `archived-filter.patch.ts` as a `BonsaiPatch` using `discovery`.
 3. Define the injected snippet: marker read, mtime cache, archived-UUID filter, fail-safe on missing/corrupt file.
 4. Append the `/*cb:archived-filter:v1*/` sentinel; self-verify with `verifySentinel`.
