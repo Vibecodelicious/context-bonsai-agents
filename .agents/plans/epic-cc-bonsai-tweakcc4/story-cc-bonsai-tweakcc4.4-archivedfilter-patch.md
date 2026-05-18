@@ -40,8 +40,8 @@ Examples only:
 
 - Patch-point location goes through `discovery.selectUnique` — no bespoke regex; the visibility predicate is one of 133 `switch(X.type)` sites.
 - The injected reader must fail safe: a missing/empty/corrupt marker file means "filter nothing," never a crash.
-- The injected code uses host globals (`globalThis` cache, `Buffer`); these are verified in `cli.js` but MUST be re-verified inside the repacked native binary.
-- Full functional proof (prune → measured token drop, secret oracle) is owned by Story 8's Protocol A; this story's own bar is that the patch applies, self-verifies, and the injected code executes correctly in a repacked native binary.
+- The injected code uses host globals (`globalThis` cache, `Buffer`); this story verifies the snippet deterministically in unit/runtime tests and preserves a target-artifact hook, but real repacked-native execution is deferred unless an approved repo-local pinned native artifact is present.
+- Full functional proof (prune → measured token drop, secret oracle) and release-gate pinned native runtime evidence are owned by Story 8's Protocol A and pinned-target artifact evidence. This story's own bar is that the patch applies, self-verifies, and the injected runtime snippet behaves correctly against fixtures/unit tests.
 
 ## Acceptance Criteria
 
@@ -51,7 +51,7 @@ Examples only:
 - [ ] After `apply`, `verifySentinel` confirms the sentinel is present exactly once.
 - [ ] The injected runtime code reads `~/.claude/archived-<session>.json`, caches with mtime tracking, and filters archived UUIDs; a missing/empty/corrupt marker file filters nothing and does not throw.
 - [ ] The module is registered in `patches/registry.ts` as the first patch.
-- [ ] **Native-binary check:** after the harness applies this patch to a copy of a native install and repacks, the rebuilt binary runs and the injected code's host-global usage (`globalThis` cache, `Buffer`/fs access) executes without `ReferenceError` — verified by a runtime smoke check.
+- [ ] **Native-binary evidence boundary:** if an approved repo-local pinned native artifact/copy exists under the epic target-artifact contract, run the archived-filter harness/repack runtime smoke and record that the injected host-global usage (`globalThis` cache, `Buffer`/fs access) executes without `ReferenceError`; otherwise explicitly defer real native-binary runtime evidence to Story 8's release gate. Story 4 must still provide deterministic apply, sentinel, unit, and runtime-snippet coverage.
 - [ ] `bun run typecheck` and `bun test` pass.
 
 ## Context References
@@ -89,7 +89,7 @@ Examples only:
 
 ### Phase 4: Testing and Validation
 
-- Unit tests against fixtures; the native repack + runtime smoke check.
+- Unit tests against fixtures; if an approved repo-local pinned native artifact is present, run the native repack + runtime smoke check. Otherwise record the deferral of real native-binary runtime evidence to Story 8 while keeping deterministic Story 4 coverage.
 
 ## Step-by-Step Tasks
 
@@ -99,13 +99,13 @@ Examples only:
 4. Append the `/*cb:archived-filter:v1*/` sentinel; self-verify with `verifySentinel`.
 5. Register the module in `patches/registry.ts` as patch 1.
 6. Write `archived-filter.patch.test.ts` (fixture-based unit tests).
-7. Run the harness against a copied native install; smoke-test the repacked binary's injected host-global usage.
+7. If an approved repo-local pinned native artifact/copy is present, run the harness against it and smoke-test the repacked binary's injected host-global usage; otherwise defer that real native-binary runtime evidence to Story 8's release gate.
 8. Run `bun run typecheck` and `bun test`.
 
 ## Testing Strategy
 
 - Unit: anchor resolution on fixtures, fail-closed on a no-match fixture, sentinel self-verification, the injected filter's behavior incl. missing/corrupt marker file.
-- Native integration: apply via the Story 2 harness to a copied native binary, repack, run, and confirm the injected code executes without a host-global `ReferenceError`. Skip-with-reason if no native install is present.
+- Native integration: apply via the Story 2 harness to an approved repo-local pinned native artifact/copy, repack, run, and confirm the injected code executes without a host-global `ReferenceError`. If no approved repo-local pinned native artifact/copy is present, record a Story 8 release-gate deferral rather than using ambient machine state.
 - Full functional proof (token reduction, secret oracle) is exercised in Story 8.
 
 ## Validation Commands
