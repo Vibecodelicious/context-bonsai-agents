@@ -1,6 +1,6 @@
 # Epic: Re-implement Context Bonsai for Claude Code on tweakcc 4.0
 
-**Goal:** Deliver a working Context Bonsai integration for current Claude Code (2.1.x) that actually reduces tokens sent to the provider, runs on the **native** Claude Code installation (not just the npm `cli.js`), is built on tweakcc 4.0's `adhoc-patch` mechanism (no tweakcc fork), and uses resilient, self-verifying patch anchors so it survives Claude Code's per-release re-minification.
+**Goal:** Deliver a working Context Bonsai integration for the pinned Claude Code target release that actually reduces tokens sent to the provider, runs on the **native** Claude Code installation (not just the npm `cli.js`), is built on tweakcc 4.0's `adhoc-patch` mechanism (no tweakcc fork), and uses resilient, self-verifying patch anchors so it survives Claude Code's per-release re-minification.
 **Depends on:** None (tweakcc 4.0.13 published; native-binary `unpack` confirmed to yield plain JS source).
 **Parallel with:** None (stand-alone Claude Code port work).
 **Complexity:** High
@@ -57,6 +57,17 @@ Examples only, spanning correctness, durability, trust, reversibility, and maint
 - **Auto-update re-application.** A Claude Code auto-update replaces the binary and drops the patches. Resolution for this epic: **document** the re-apply procedure and have the apply harness detect an unpatched install; an automatic re-apply watcher is explicitly out of scope (candidate for a follow-up epic).
 - **Cross-platform verification depth.** The dev environment is Linux. Resolution: e2e verification runs on Linux native + Linux npm; macOS/Windows are documented as best-effort and the platform-specific repack steps are called out as unverified-from-here.
 
+## Target Release And Artifact Contract
+
+This epic is a forward-port, not a greenfield implementation. Before patch-specific implementation is treated as release-ready, validation evidence MUST tie back to a pinned Claude Code target rather than an ambient local install.
+
+- **Pinned target:** Claude Code native `2.1.143` on Linux x64 is the primary target for this epic. npm `@anthropic-ai/claude-code` `cli.js` remains a secondary smoke target through the same tweakcc API path.
+- **Extraction toolchain:** tweakcc `4.0.13` or compatible `4.0.x`, using the Story 2 programmatic `readContent` path or an equivalent documented `tweakcc unpack` path.
+- **Reproducible artifact identity:** target-bundle evidence must record the Claude Code version, platform/install kind, extraction tool/version, exact reproduction command or harness entry point, extracted bundle checksum, candidate count(s), selected candidate evidence, timestamp, and operator.
+- **Canonical optional Story 3 artifact input:** if a developer or e2e operator has already produced the pinned-target extract, place it at `tweakcc_context_bonsai/.artifacts/claude-code/2.1.143/linux-x64/extracted.js` or point `CB_CLAUDE_TARGET_BUNDLE_JS` at the extracted JS bundle. The companion manifest path is `tweakcc_context_bonsai/.artifacts/claude-code/2.1.143/linux-x64/manifest.json` and must contain the reproducible artifact identity fields above. These artifacts are local validation artifacts and MUST NOT be committed unless explicitly approved.
+- **Credential boundary:** credentials, session transcripts, and `~/.claude` auth/config data are never part of target artifact generation or committed evidence. A local Claude install may be used only as a source for recreating the pinned target binary/bundle, not as unversioned ambient truth.
+- **Story responsibility split:** library stories may provide deterministic fixtures and target-artifact verification hooks; the release gate (Story 8) must produce or refresh the real pinned-target evidence before the epic is declared complete.
+
 ## Stories
 
 ### Story 1: Resilient-anchor spec contract and patch-required correction
@@ -71,7 +82,7 @@ Examples only, spanning correctness, durability, trust, reversibility, and maint
 
 ### Story 3: Resilient anchor-discovery library
 **Size:** Large
-**Description:** A shared module the patch scripts consume, with two responsibilities. (a) **Patch-point discovery:** multi-strategy finders, candidate scoring and disambiguation (the `switch(X.type)` pattern alone has 133 candidates), fail-closed on no/ambiguous match, and post-patch self-verification (inject a detectable sentinel, confirm it landed). (b) **Runtime-helper discovery:** re-implement the forked tweakcc's `findRuntimeHelpers()` — discovery of the minified function names for Claude Code's `fs` module, config-dir getter, and session-id getter — because tweakcc 4.0's `adhoc-patch` does not expose it. All three patches depend on this. This story is the concrete implementation of Story 1's contract and the shared dependency of Stories 4–6.
+**Description:** A shared module the patch scripts consume, with two responsibilities. (a) **Patch-point discovery:** multi-strategy finders, candidate scoring and disambiguation (the `switch(X.type)` pattern had 133 candidates in the pinned-target spike), fail-closed on no/ambiguous match, and post-patch self-verification (inject a detectable sentinel, confirm it landed). (b) **Runtime-helper discovery:** re-implement the needed helper discovery capability — discovery of the minified function names for Claude Code's `fs` module, config-dir getter, and session-id getter — because tweakcc 4.0's `adhoc-patch` does not expose it. Story 3 also provides a repo-local verification hook that can be run against the pinned target artifact defined above; Story 8 is responsible for producing release-gate evidence from that real target artifact if it is not already present. All three patches depend on this library. This story is the concrete implementation of Story 1's contract and the shared dependency of Stories 4–6.
 **Implementation Plan:** `.agents/plans/epic-cc-bonsai-tweakcc4/story-cc-bonsai-tweakcc4.3-anchor-discovery-lib.md`
 
 ### Story 4: archivedFilter patch — the context-shrink patch

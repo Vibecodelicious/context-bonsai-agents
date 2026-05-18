@@ -14,6 +14,8 @@ Two mandatory test classes, plus the existing scenario set:
 
 **(b) Protocol A — secret-prune oracle.** In a fresh session: seed a unique secret, have the assistant acknowledge it without over-repeating, prune the secret-introducing message (the secret must not appear in tool arguments, summary, or index terms), forbid further tool use, then ask for the secret. The model must be unable to reveal it from active context. The oracle is **invalidated** if the secret appears anywhere unpruned in the transcript — the protocol must check that explicitly.
 
+**(c) Pinned-target artifact evidence.** Because this epic forward-ports a patch-based integration to a minified closed-source host, the release gate must produce or refresh the evidence record for the epic's pinned target: Claude Code native `2.1.143` Linux x64 extracted with tweakcc `4.0.13` or compatible `4.0.x`. The evidence must include the extraction tool/version, exact reproduction command or harness entry point, extracted bundle checksum, candidate count(s), selected candidate evidence, timestamp, and operator. It must exclude credentials, session transcripts, and `~/.claude` auth/config data.
+
 Adapt the existing protocol document `tweakcc_context_bonsai/docs/e2e-protocol.md`: it already covers scenarios E2E-01..07; add the install-procedure scenario, and align it to native + tweakcc 4.0. While editing, **correct the stale `settings.json` references to `~/.claude.json`** — they occur at `e2e-protocol.md` lines 9, 46, and 64 (all three; Story 7 confirms the authoritative file). `docs/context-bonsai-e2e-template.md` is the cross-port template to align with.
 
 The patch stories (4, 6) deliberately delegate full functional/Protocol-A proof to this story; this story owns it as the integrated release gate.
@@ -44,6 +46,7 @@ Examples only:
 - The install test runs the *documented* commands, not bespoke ones — it tests Story 9's doc as much as the code.
 - Native is the primary verified path; npm `cli.js` is smoke-checked, not deeply exercised.
 - Provider credentials for the sprite are out-of-band and never committed (see the installation-e2e template's Phase 0).
+- Target artifact evidence is about the Claude Code binary/bundle only; it never includes provider credentials, session transcripts, or `~/.claude` auth/config data.
 
 ## Acceptance Criteria
 
@@ -52,6 +55,7 @@ Examples only:
 - [ ] The install-procedure test runs the documented apply commands verbatim from a clean fly.io sprite and verifies the tools are functional (a prune measurably reduces context), not merely registered.
 - [ ] The Protocol A secret-prune oracle is specified and executed, including the explicit invalidation check that the secret never appears in unpruned transcript, tool arguments, summary, or index terms.
 - [ ] The existing scenario set (E2E-01..07) is run against the integrated system; results are recorded with PASS/BLOCKED/FAIL verdicts and evidence.
+- [ ] A pinned-target artifact evidence record is produced or refreshed for Claude Code native `2.1.143` Linux x64, including extraction tool/version, exact reproduction command or harness entry point, extracted bundle checksum, candidate count(s), selected candidate evidence, timestamp, and operator. The evidence excludes credentials, session transcripts, and `~/.claude` auth/config data.
 - [ ] A full PASS run is recorded as the epic's release gate.
 - [ ] `bun run typecheck` and `bun test` still pass (no regression in the side repo).
 
@@ -71,7 +75,7 @@ Examples only:
 
 ### Relevant Documentation
 
-- The epic, all three Shared Implementation Contracts.
+- The epic, all three Shared Implementation Contracts, and the Target Release And Artifact Contract.
 - `docs/context-bonsai-agent-spec.md` "Minimum Validation Scenarios" — the scenario set this story must cover.
 
 ## Implementation Plan
@@ -84,6 +88,7 @@ Examples only:
 
 - Update `e2e-protocol.md` for native + tweakcc 4.0; add the install-procedure scenario; fix the three `settings.json` lines.
 - Specify the Protocol A oracle with the explicit invalidation check.
+- Specify the pinned-target artifact evidence step and credential boundary.
 
 ### Phase 3: Integration
 
@@ -92,6 +97,7 @@ Examples only:
 ### Phase 4: Testing and Validation
 
 - Execute the full protocol; record verdicts and evidence; confirm a full PASS gate.
+- Produce or refresh the pinned-target evidence record before declaring the epic release gate passed.
 
 ## Step-by-Step Tasks
 
@@ -99,14 +105,16 @@ Examples only:
 2. Update `e2e-protocol.md` for the native + tweakcc-4.0 flow; correct `settings.json` → `~/.claude.json` at lines 9, 46, 64.
 3. Add the install-procedure scenario (clean sprite → documented commands verbatim → functional prune check).
 4. Specify the Protocol A secret-prune oracle with the invalidation gate.
-5. Build the runnable e2e harness/script.
-6. Execute the full protocol on a fly.io sprite; record PASS/BLOCKED/FAIL with evidence.
-7. Confirm and record the full-PASS release gate; run `bun run typecheck` and `bun test`.
+5. Add the pinned-target artifact evidence step and credential boundary to the protocol/run record.
+6. Build the runnable e2e harness/script.
+7. Execute the full protocol on a fly.io sprite; record PASS/BLOCKED/FAIL with evidence.
+8. Produce or refresh the pinned-target evidence record, then confirm and record the full-PASS release gate; run `bun run typecheck` and `bun test`.
 
 ## Testing Strategy
 
 - This story *is* the test story: e2e on a clean fly.io sprite. Native install is primary; npm `cli.js` gets a smoke check.
 - Evidence favors model-visible transcript over internal logs, per the spec's Evidence Expectations.
+- Pinned-target artifact evidence favors binary/bundle metadata and discovery outputs; it must not include credentials or session content.
 - Each scenario gets an explicit PASS/BLOCKED/FAIL verdict; a missing dependency is BLOCKED, not FAIL.
 
 ## Validation Commands
@@ -127,7 +135,7 @@ Examples only:
 
 - Approval Status: `approved`
 - Approval Citation: `User approval: "Approved" (2026-05-17)`
-- Plan Commit Hash: `314b715`
+- Plan Commit Hash: `pending revised-plan validation and commit`
 - Ready-for-Orchestration: `yes`
 
 ## Completion Checklist
