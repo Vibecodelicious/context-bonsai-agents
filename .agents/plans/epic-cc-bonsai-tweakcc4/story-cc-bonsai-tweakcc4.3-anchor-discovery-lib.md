@@ -137,7 +137,7 @@ Examples only:
 
 - Approval Status: `approved`
 - Approval Citation: `User direction: "Update the plan, but use the process in planning_guidance.md... Commit the plan once..." (2026-05-18)`
-- Plan Commit Hash: `pending revised-plan validation and commit`
+- Plan Commit Hash: `fc0beb1`
 - Ready-for-Orchestration: `yes`
 
 ## Completion Checklist
