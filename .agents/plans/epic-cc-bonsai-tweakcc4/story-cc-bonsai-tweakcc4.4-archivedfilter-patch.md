@@ -105,6 +105,7 @@ Examples only:
 ## Testing Strategy
 
 - Unit: anchor resolution on fixtures, fail-closed on a no-match fixture, sentinel self-verification, the injected filter's behavior incl. missing/corrupt marker file.
+- Anchor-evidence bar: tests/evidence must exercise the production selector/scorer functions, not duplicated or weaker selector code; happy-path fixtures and sentinel-only checks are insufficient. Include broad false-positive rejection across non-visibility-predicate `switch(X.type)` sites, tied strong candidates fail closed, no-match fail closed, and the intended visibility predicate target is unique; do not weaken `minScore`/`minMargin` or fail-closed behavior to pass. Duplicated evidence-only selector logic is a HIGH/CRITICAL review finding depending on release impact.
 - Native integration: apply via the Story 2 harness to an approved repo-local pinned native artifact/copy, repack, run, and confirm the injected code executes without a host-global `ReferenceError`. If no approved repo-local pinned native artifact/copy is present, record a Story 8 release-gate deferral rather than using ambient machine state.
 - Full functional proof (token reduction, secret oracle) is exercised in Story 8.
 

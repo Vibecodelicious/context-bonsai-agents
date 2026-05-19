@@ -102,6 +102,7 @@ Examples only:
 ## Testing Strategy
 
 - Unit: anchor resolution across the converter fixture shapes, fail-closed on a no-match fixture, sentinel self-verification, tag injection present/absent by marker-file state.
+- Anchor-evidence bar: tests/evidence must exercise the production selector/scorer functions, not duplicated or weaker selector code; happy-path fixtures and sentinel-only checks are insufficient. Include broad false-positive rejection across non-converter candidates, tied strong candidates fail closed, no-match fail closed, and the intended converter target is unique on each applicable fixture shape; do not weaken `minScore`/`minMargin` or fail-closed behavior to pass. Duplicated evidence-only selector logic is a HIGH/CRITICAL review finding depending on release impact.
 - Composition: apply `archived-filter` then `message-content-ids` to the same fixture and confirm both anchors resolve and both sentinels are present.
 
 ## Validation Commands

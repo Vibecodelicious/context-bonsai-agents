@@ -110,6 +110,7 @@ Examples only:
 ## Testing Strategy
 
 - Unit: each of the three anchors resolves on fixtures; fail-closed when any does not; re-find discipline verified (an insertion does not invalidate a later anchor); firing rules and severity bands; sentinel self-verification.
+- Anchor-evidence bar: tests/evidence must exercise the production selector/scorer functions for all three anchors, not duplicated or weaker selector code; happy-path fixtures and sentinel-only checks are insufficient. Include broad false-positive rejection across unrelated token, attachment, and reminder candidates, tied strong candidates fail closed, no-match fail closed for each anchor, and each intended target is unique where applicable; do not weaken `minScore`/`minMargin` or fail-closed behavior to pass. Duplicated evidence-only selector logic is a HIGH/CRITICAL review finding depending on release impact.
 - Composition: apply all three patches in registry order to one fixture; confirm all anchors resolve and all three sentinels are present.
 - Native integration: apply via the Story 2 harness to a copied native binary, repack, run, confirm the gauge's host-global usage executes without `ReferenceError`. Skip-with-reason if no native install is present.
 
