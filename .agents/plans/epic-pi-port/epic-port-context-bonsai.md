@@ -1,6 +1,15 @@
 # Epic: Port context-bonsai to Pi as a first-party extension
 
-**Goal:** Bring OpenCode's context-bonsai surgical-pruning capability to Pi as an opt-in extension package (`packages/context-bonsai/`), delivering the four hooks (prune tool, retrieve tool, context transform with archive placeholders, system-reminder gauge, system-prompt guidance) via Pi's existing `ExtensionAPI`.
+> **Architecture note.** This epic delivered the Pi context-bonsai port. The
+> integration is a standalone Pi extension that lives in the `pi_context_bonsai`
+> side repository and integrates entirely through Pi's public `ExtensionAPI` —
+> there is no Pi fork modification and no in-tree pi-mono package. The follow-on
+> epic `epic-pi-bonsai-relocation` moved the extension, its full test tree, and
+> these docs into `pi_context_bonsai`; this epic's file paths are written for
+> that standalone layout. Extension source, unit tests, integration tests, and
+> e2e harness all live under `pi_context_bonsai/`.
+
+**Goal:** Bring OpenCode's context-bonsai surgical-pruning capability to Pi as an opt-in standalone extension (the `pi_context_bonsai` side repository), delivering the four hooks (prune tool, retrieve tool, context transform with archive placeholders, system-reminder gauge, system-prompt guidance) via Pi's existing `ExtensionAPI`.
 **Depends on:** None (Pi already exposes the full surface area needed — `pi.registerTool`, `pi.on("context")`, `pi.on("before_agent_start")`, `pi.appendEntry`, `ctx.sessionManager`, `ctx.getContextUsage`).
 **Parallel with:** None — the stories are sequential because each depends on the scaffold produced by the previous.
 **Complexity:** Medium
@@ -42,7 +51,7 @@ The `"context"` event (emitted in `packages/coding-agent/src/core/extensions/run
 
 ### Story 1: Package scaffold + extension entry point + system-prompt guidance
 **Size:** Small
-**Description:** Create `packages/context-bonsai/` as a workspace package with a minimal extension factory that registers nothing but appends bonsai's system-prompt guidance via `before_agent_start`. Proves the loading, build, and test plumbing end-to-end before any business logic lands.
+**Description:** Create the `pi_context_bonsai` side repository with a minimal extension factory that registers nothing but appends bonsai's system-prompt guidance via `before_agent_start`. Proves the loading, build, and test plumbing end-to-end before any business logic lands.
 **Implementation Plan:** `.agents/plans/epic-port-context-bonsai/story-port-context-bonsai.1-package-scaffold.md`
 
 ### Story 2: Prune tool + archive store + context transform
@@ -62,7 +71,7 @@ The `"context"` event (emitted in `packages/coding-agent/src/core/extensions/run
 
 ### Story 5: End-to-end test→fix→test validation loop
 **Size:** Medium
-**Description:** Write a Pi-native end-to-end validation protocol (`packages/context-bonsai/docs/e2e-testing.md`) and automation harness (`test/e2e/run-e2e.sh` + `assert.mjs`) built on the prerequisite research document `.agents/research/pi-e2e-interaction-baseline.md`. Run the resulting suite in a test→diagnose→fix→re-test loop covering seven scenarios (extension load, prune, retrieve, reload persistence, gauge cadence, same-turn prune+retrieve no-op, secret prune oracle). Every fix applied during the loop is accompanied by a regression test backfilled into Stories 1–4's unit/integration suite. Story complete when `run-e2e.sh --all` exits 0 against the pinned provider/model.
+**Description:** Write a Pi-native end-to-end validation protocol (`pi_context_bonsai/docs/e2e-testing.md`) and automation harness (`test/e2e/run-e2e.sh` + `assert.mjs`) built on the prerequisite research document `.agents/research/pi-e2e-interaction-baseline.md`. Run the resulting suite in a test→diagnose→fix→re-test loop covering seven scenarios (extension load, prune, retrieve, reload persistence, gauge cadence, same-turn prune+retrieve no-op, secret prune oracle). Every fix applied during the loop is accompanied by a regression test backfilled into Stories 1–4's unit/integration suite. Story complete when `run-e2e.sh --all` exits 0 against the pinned provider/model.
 **Implementation Plan:** `.agents/plans/epic-port-context-bonsai/story-port-context-bonsai.5-e2e-test-fix-loop.md`
 
 ## Dependencies and Integration
@@ -70,10 +79,10 @@ The `"context"` event (emitted in `packages/coding-agent/src/core/extensions/run
 - Prerequisites: none — all Pi surface area required is already present (confirmed by reading `packages/coding-agent/src/core/extensions/types.ts` and `runner.ts:809-839`).
 - Enables: future stories for slash-command shortcuts, footer gauge widget, bonsai-as-compaction-strategy.
 - Integration points:
-  - New workspace package: `packages/context-bonsai/`.
-  - Consumed via Pi's extension discovery: local (`.pi/extensions/`), global (`~/.pi/extensions/`), or explicit path (see `packages/coding-agent/src/core/extensions/loader.ts:560 discoverAndLoadExtensions`). No change to Pi core is required to use it.
-  - Root `package.json` workspace globs already match `packages/*`; no root change needed for the package to be discovered by npm install.
-  - Tests co-located in `packages/context-bonsai/test/` (unit) and `packages/coding-agent/test/suite/context-bonsai/` (integration, using `createTestExtensionsResult` from `test/utilities.ts:185`).
+  - New standalone repository: `pi_context_bonsai`.
+  - Consumed via Pi's extension discovery: user-global (`~/.pi/agent/extensions/`), project-local (`.pi/extensions/`), or explicit path (see `packages/coding-agent/src/core/extensions/loader.ts:560 discoverAndLoadExtensions`). No change to Pi core is required to use it.
+  - `pi_context_bonsai` is a plain standalone npm package; it depends on Pi's published packages by explicit pinned version, not as a monorepo workspace member.
+  - Tests co-located in `pi_context_bonsai/test/` (unit) and `pi_context_bonsai/test/integration/` (integration, on an SDK-based harness built against Pi's public packages).
 
 ## Risks and Mitigations
 
@@ -89,7 +98,7 @@ The `"context"` event (emitted in `packages/coding-agent/src/core/extensions/run
 ## Worktree Artifact Check (epic-level rollup)
 
 - Checked At: 2026-04-23
-- Planned Target Files: none of the planned source paths (`packages/context-bonsai/**`, `packages/coding-agent/test/suite/context-bonsai/**`) currently exist. `git status` is clean at the start of the epic. The prerequisite research document at `.agents/research/pi-e2e-interaction-baseline.md` was produced during planning and will be committed alongside the plan artifacts.
+- Planned Target Files: none of the planned source paths (`pi_context_bonsai/src/**`, `pi_context_bonsai/test/**`) currently exist. `git status` is clean at the start of the epic. The prerequisite research document at `.agents/research/pi-e2e-interaction-baseline.md` was produced during planning and will be committed alongside the plan artifacts.
 - Overlaps Found: none.
 - Escalation Status: none.
 - Decision Citation: n/a.

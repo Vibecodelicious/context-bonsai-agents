@@ -4,6 +4,13 @@
 **Size:** Medium
 **Dependencies:** Story 2 (shares the `"context"` handler and `state` module)
 
+> **Architecture note.** Pi context-bonsai is a standalone Pi extension; it
+> integrates entirely through Pi's public `ExtensionAPI` with no Pi fork
+> modification and no in-tree pi-mono package. The extension source, unit
+> tests, integration tests, and e2e harness all live in the `pi_context_bonsai`
+> side repository (relocated there by the `epic-pi-bonsai-relocation` epic);
+> file paths in this story are written for that standalone layout.
+
 ## Story Description
 
 Add the context-usage gauge: a `<system-reminder>…</system-reminder>` text block appended to the last user message on a cadence (every N turns), telling the LLM its current token usage as a percentage of the usable budget. This is the signal that drives the model to autonomously call `context-bonsai-prune` — it **must** land in the LLM's own context, never only in a human-visible footer.
@@ -32,7 +39,7 @@ Optional secondary UX: mirror the current gauge to `ctx.ui.setStatus("bonsai", .
 
 ## Acceptance Criteria
 
-- [ ] `packages/context-bonsai/src/gauge.ts` exports:
+- [ ] `pi_context_bonsai/src/gauge.ts` exports:
   - `formatGaugeText(used: number, usableBudget: number, percent: number): string` — implements the shared spec's four locked severity bands.
   - `maybeInjectGauge(messages: AgentMessage[], state, usage: ContextUsage): AgentMessage[]` — pure function that returns a transcript with the gauge appended to the last user message iff cadence fires and usage is known.
 - [ ] The context handler from Story 2 calls `maybeInjectGauge(...)` after archive placeholders are applied.
@@ -45,7 +52,7 @@ Optional secondary UX: mirror the current gauge to `ctx.ui.setStatus("bonsai", .
   - `maybeInjectGauge` no-ops when cadence not fired.
   - `maybeInjectGauge` no-ops when usage is undefined.
   - `maybeInjectGauge` injects correctly to array-form and string-form user content.
-- [ ] Integration test `packages/coding-agent/test/suite/context-bonsai/04-gauge.test.ts`:
+- [ ] Integration test `pi_context_bonsai/test/integration/04-gauge.test.ts`:
   - Faux-provider session with controlled token usage.
   - Run 5 turns; assert exactly one turn's `"context"` event carries the gauge in the last user message (turn N where `turnCount % 5 === 0`).
   - Assert gauge text format matches `/^<system-reminder>\n\[CONTEXT GAUGE: .* tokens \(\d+%\)\]/`.
@@ -56,19 +63,19 @@ Optional secondary UX: mirror the current gauge to `ctx.ui.setStatus("bonsai", .
 ### Relevant Codebase Files (must read)
 - `packages/coding-agent/src/core/extensions/types.ts:276-282` — `ContextUsage` shape.
 - `packages/coding-agent/src/core/extensions/types.ts:316-317` — `ctx.getContextUsage()`.
-- `packages/context-bonsai/src/context-transform.ts` (from Story 2) — where gauge injection hooks in.
-- `packages/context-bonsai/src/state.ts` (from Story 2).
+- `pi_context_bonsai/src/context-transform.ts` (from Story 2) — where gauge injection hooks in.
+- `pi_context_bonsai/src/state.ts` (from Story 2).
 - `/home/basil/projects/opencode_context_bonsai_plugin/src/gauge.ts`
 - `/home/basil/projects/opencode_context_bonsai_plugin/src/gauge.test.ts`
 
 ### New Files to Create
-- `packages/context-bonsai/src/gauge.ts`
-- `packages/context-bonsai/test/gauge.test.ts`
-- `packages/coding-agent/test/suite/context-bonsai/04-gauge.test.ts`
+- `pi_context_bonsai/src/gauge.ts`
+- `pi_context_bonsai/test/gauge.test.ts`
+- `pi_context_bonsai/test/integration/04-gauge.test.ts`
 
 ### Files Modified
-- `packages/context-bonsai/src/context-transform.ts` — calls `maybeInjectGauge` after archive transforms.
-- `packages/context-bonsai/src/state.ts` — add/export `turnCount` getter/setter if not already present from Story 2.
+- `pi_context_bonsai/src/context-transform.ts` — calls `maybeInjectGauge` after archive transforms.
+- `pi_context_bonsai/src/state.ts` — add/export `turnCount` getter/setter if not already present from Story 2.
 
 ## Implementation Plan
 
@@ -106,15 +113,15 @@ Optional secondary UX: mirror the current gauge to `ctx.ui.setStatus("bonsai", .
 
 Per `AGENTS.md`: use the vitest CLI form for named tests.
 
-- `cd /home/basil/projects/context-bonsai-pi && npm run check`
-- `cd /home/basil/projects/context-bonsai-pi/packages/context-bonsai && npx tsx ../../node_modules/vitest/dist/cli.js --run test/gauge.test.ts`
-- `cd /home/basil/projects/context-bonsai-pi/packages/coding-agent && npx tsx ../../node_modules/vitest/dist/cli.js --run test/suite/context-bonsai/04-gauge.test.ts`
+- `cd /home/basil/projects/context-bonsai-agents/pi_context_bonsai && npm run typecheck`
+- `cd /home/basil/projects/context-bonsai-agents/pi_context_bonsai && npx tsx ../../node_modules/vitest/dist/cli.js --run test/gauge.test.ts`
+- `cd /home/basil/projects/context-bonsai-agents/pi_context_bonsai && npx vitest run test/suite/context-bonsai/04-gauge.test.ts`
 
 ## Worktree Artifact Check
 
 - Checked At: 2026-05-06
-- Planned Target Files: `packages/context-bonsai/src/gauge.ts`, `packages/context-bonsai/src/context-transform.ts` (modified), `packages/context-bonsai/src/state.ts` (possibly modified), `packages/context-bonsai/test/gauge.test.ts`, `packages/coding-agent/test/suite/context-bonsai/04-gauge.test.ts`
-- Overlaps Found: `packages/context-bonsai/src/context-transform.ts` and `state.ts` will be modified relative to Story 2's commit (in-epic).
+- Planned Target Files: `pi_context_bonsai/src/gauge.ts`, `pi_context_bonsai/src/context-transform.ts` (modified), `pi_context_bonsai/src/state.ts` (possibly modified), `pi_context_bonsai/test/gauge.test.ts`, `pi_context_bonsai/test/integration/04-gauge.test.ts`
+- Overlaps Found: `pi_context_bonsai/src/context-transform.ts` and `state.ts` will be modified relative to Story 2's commit (in-epic).
 - Escalation Status: none
 - Decision Citation: n/a
 

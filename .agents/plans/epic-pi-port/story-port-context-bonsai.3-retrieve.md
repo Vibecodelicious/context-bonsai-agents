@@ -4,6 +4,13 @@
 **Size:** Small
 **Dependencies:** Story 2 (requires `ArchiveStore`, `state`, and the `"context"` handler wired in)
 
+> **Architecture note.** Pi context-bonsai is a standalone Pi extension; it
+> integrates entirely through Pi's public `ExtensionAPI` with no Pi fork
+> modification and no in-tree pi-mono package. The extension source, unit
+> tests, integration tests, and e2e harness all live in the `pi_context_bonsai`
+> side repository (relocated there by the `epic-pi-bonsai-relocation` epic);
+> file paths in this story are written for that standalone layout.
+
 ## Story Description
 
 Add `context-bonsai-retrieve`: an LLM-callable tool that clears a previously-written archive so the next `"context"` event no longer elides that range. Persistence is via a tombstone custom entry (`customType: "context-bonsai:archive-clear"`) so a reload still reflects the retrieval.
@@ -30,7 +37,7 @@ As with prune, the retrieve tool is registered with `executionMode: "sequential"
 
 ## Acceptance Criteria
 
-- [ ] `packages/context-bonsai/src/retrieve.ts` exports `createRetrieveTool(store)` returning a `ToolDefinition` with name `context-bonsai-retrieve`, description and args identical to OpenCode's `retrieve.ts`, **and `executionMode: "sequential"`** for parity with prune.
+- [ ] `pi_context_bonsai/src/retrieve.ts` exports `createRetrieveTool(store)` returning a `ToolDefinition` with name `context-bonsai-retrieve`, description and args identical to OpenCode's `retrieve.ts`, **and `executionMode: "sequential"`** for parity with prune.
 - [ ] Execution:
   - Look up `anchor_id` in `ArchiveStore`. Return an `Error: No archive found for message ...` string if absent.
   - Persist tombstone: `pi.appendEntry("context-bonsai:archive-clear", { anchorEntryId })`. No atomic-update wrapper, no lock — `appendFileSync` is the atomic unit.
@@ -39,11 +46,11 @@ As with prune, the retrieve tool is registered with `executionMode: "sequential"
 - [ ] `src/index.ts` registers the new tool: `pi.registerTool(createRetrieveTool(store))`.
 - [ ] Unit test: archive found → tombstone written + store cleared; archive absent → error string.
 - [ ] Unit test: same-turn prune+retrieve produces archive plus archive-clear entries and a hydrated store where the archive is absent (tombstone wins).
-- [ ] Integration test `packages/coding-agent/test/suite/context-bonsai/03-retrieve.test.ts`:
+- [ ] Integration test `pi_context_bonsai/test/integration/03-retrieve.test.ts`:
   - Prime the session with an existing archive (call prune on turn N, then user+assistant on turn N+1, then retrieve).
   - Assert the `"context"` event after retrieve delivers the original un-elided transcript.
   - Reload the session and assert the tombstone sticks (archive stays cleared).
-- [ ] Integration test `packages/coding-agent/test/suite/context-bonsai/03b-same-turn-prune-retrieve.test.ts`:
+- [ ] Integration test `pi_context_bonsai/test/integration/03b-same-turn-prune-retrieve.test.ts`:
   - Faux provider emits one assistant message that calls prune then retrieve with the same `anchor_id` in the same tool-call batch.
   - Assert both tool results are success.
   - Assert the session file has one `context-bonsai:archive` entry and one `context-bonsai:archive-clear` entry.
@@ -54,18 +61,18 @@ As with prune, the retrieve tool is registered with `executionMode: "sequential"
 ## Context References
 
 ### Relevant Codebase Files (must read)
-- `packages/context-bonsai/src/archive-store.ts` (from Story 2) — API used here. Tombstone-wins precedence is already implemented in `hydrateFromEntries`.
+- `pi_context_bonsai/src/archive-store.ts` (from Story 2) — API used here. Tombstone-wins precedence is already implemented in `hydrateFromEntries`.
 - `packages/coding-agent/src/core/session-manager.ts:98-102` — `CustomEntry` format for tombstones.
 - `/home/basil/projects/opencode_context_bonsai_plugin/src/retrieve.ts` — reference port. Do not port the same-step guard.
 
 ### New Files to Create
-- `packages/context-bonsai/src/retrieve.ts`
-- `packages/context-bonsai/test/retrieve.test.ts`
-- `packages/coding-agent/test/suite/context-bonsai/03-retrieve.test.ts`
-- `packages/coding-agent/test/suite/context-bonsai/03b-same-turn-prune-retrieve.test.ts`
+- `pi_context_bonsai/src/retrieve.ts`
+- `pi_context_bonsai/test/retrieve.test.ts`
+- `pi_context_bonsai/test/integration/03-retrieve.test.ts`
+- `pi_context_bonsai/test/integration/03b-same-turn-prune-retrieve.test.ts`
 
 ### Files Modified
-- `packages/context-bonsai/src/index.ts` — register retrieve tool.
+- `pi_context_bonsai/src/index.ts` — register retrieve tool.
 
 ## Implementation Plan
 
@@ -104,15 +111,15 @@ As with prune, the retrieve tool is registered with `executionMode: "sequential"
 
 Per `AGENTS.md`: use the vitest CLI form for named tests.
 
-- `cd /home/basil/projects/context-bonsai-pi && npm run check`
-- `cd /home/basil/projects/context-bonsai-pi/packages/context-bonsai && npx tsx ../../node_modules/vitest/dist/cli.js --run test/retrieve.test.ts`
-- `cd /home/basil/projects/context-bonsai-pi/packages/coding-agent && npx tsx ../../node_modules/vitest/dist/cli.js --run test/suite/context-bonsai/03-retrieve.test.ts test/suite/context-bonsai/03b-same-turn-prune-retrieve.test.ts`
+- `cd /home/basil/projects/context-bonsai-agents/pi_context_bonsai && npm run typecheck`
+- `cd /home/basil/projects/context-bonsai-agents/pi_context_bonsai && npx tsx ../../node_modules/vitest/dist/cli.js --run test/retrieve.test.ts`
+- `cd /home/basil/projects/context-bonsai-agents/pi_context_bonsai && npx vitest run test/suite/context-bonsai/03-retrieve.test.ts test/suite/context-bonsai/03b-same-turn-prune-retrieve.test.ts`
 
 ## Worktree Artifact Check
 
 - Checked At: 2026-05-06
-- Planned Target Files: `packages/context-bonsai/src/retrieve.ts`, `packages/context-bonsai/src/index.ts` (modified), `packages/context-bonsai/test/retrieve.test.ts`, `packages/coding-agent/test/suite/context-bonsai/03-retrieve.test.ts`, `packages/coding-agent/test/suite/context-bonsai/03b-same-turn-prune-retrieve.test.ts`
-- Overlaps Found: `packages/context-bonsai/src/index.ts` will again be modified from prior story output (in-epic).
+- Planned Target Files: `pi_context_bonsai/src/retrieve.ts`, `pi_context_bonsai/src/index.ts` (modified), `pi_context_bonsai/test/retrieve.test.ts`, `pi_context_bonsai/test/integration/03-retrieve.test.ts`, `pi_context_bonsai/test/integration/03b-same-turn-prune-retrieve.test.ts`
+- Overlaps Found: `pi_context_bonsai/src/index.ts` will again be modified from prior story output (in-epic).
 - Escalation Status: none
 - Decision Citation: n/a
 
