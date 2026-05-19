@@ -123,8 +123,8 @@ Examples only; broad dimensions.
 
 - Approval Status: `approved`
 - Approval Citation: `User approval — message "approved", 2026-05-18`
-- Plan Commit Hash: `pending`
-- Ready-for-Orchestration: `no`
+- Plan Commit Hash: `15a260d705bf5cbc54f5a7647ad190cef3457cef`
+- Ready-for-Orchestration: `yes`
 
 ## Completion Checklist
 
