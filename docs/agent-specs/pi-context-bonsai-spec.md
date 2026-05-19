@@ -143,6 +143,7 @@ The Pi e2e harness MUST defer to Pi's documented credential resolution rather th
 ## Key References
 
 - [epic-port-context-bonsai.md](/home/basil/projects/context-bonsai-agents/.agents/plans/epic-pi-port/epic-port-context-bonsai.md)
+- [story-port-context-bonsai.1-package-scaffold.md](/home/basil/projects/context-bonsai-agents/.agents/plans/epic-pi-port/story-port-context-bonsai.1-package-scaffold.md)
 - [story-port-context-bonsai.2-prune-and-context-transform.md](/home/basil/projects/context-bonsai-agents/.agents/plans/epic-pi-port/story-port-context-bonsai.2-prune-and-context-transform.md)
 - [story-port-context-bonsai.3-retrieve.md](/home/basil/projects/context-bonsai-agents/.agents/plans/epic-pi-port/story-port-context-bonsai.3-retrieve.md)
 - [story-port-context-bonsai.4-context-gauge.md](/home/basil/projects/context-bonsai-agents/.agents/plans/epic-pi-port/story-port-context-bonsai.4-context-gauge.md)

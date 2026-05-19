@@ -52,27 +52,27 @@ The `"context"` event (emitted in `packages/coding-agent/src/core/extensions/run
 ### Story 1: Package scaffold + extension entry point + system-prompt guidance
 **Size:** Small
 **Description:** Create the `pi_context_bonsai` side repository with a minimal extension factory that registers nothing but appends bonsai's system-prompt guidance via `before_agent_start`. Proves the loading, build, and test plumbing end-to-end before any business logic lands.
-**Implementation Plan:** `.agents/plans/epic-port-context-bonsai/story-port-context-bonsai.1-package-scaffold.md`
+**Implementation Plan:** `.agents/plans/epic-pi-port/story-port-context-bonsai.1-package-scaffold.md`
 
 ### Story 2: Prune tool + archive store + context transform
 **Size:** Large
 **Description:** Port `prune-pattern.ts`, `prune-pattern-matcher.ts`, archive schema, and per-session state module. Register `context-bonsai-prune` tool that resolves `from_pattern`/`to_pattern` to `SessionEntry.id` pairs, searching message text plus completed tool-call names, inputs, and outputs; persists the archive via `pi.appendEntry("context-bonsai:archive", ...)`; and updates in-memory state. Implement the `"context"` handler that walks the branch to correlate messages to entry ids, replaces each archive anchor with a placeholder text, and elides followers. Rebuild state on `session_start`.
-**Implementation Plan:** `.agents/plans/epic-port-context-bonsai/story-port-context-bonsai.2-prune-and-context-transform.md`
+**Implementation Plan:** `.agents/plans/epic-pi-port/story-port-context-bonsai.2-prune-and-context-transform.md`
 
 ### Story 3: Retrieve tool
 **Size:** Small
 **Description:** Register `context-bonsai-retrieve`. On call, look up the anchor in the archive store, persist a `context-bonsai:archive-clear` custom entry (tombstone), and remove from the in-memory map. Same-turn prune+retrieve is intentionally supported as an audit-clean no-op in Pi.
-**Implementation Plan:** `.agents/plans/epic-port-context-bonsai/story-port-context-bonsai.3-retrieve.md`
+**Implementation Plan:** `.agents/plans/epic-pi-port/story-port-context-bonsai.3-retrieve.md`
 
 ### Story 4: Context gauge (system-reminder injection)
 **Size:** Medium
 **Description:** Track running token totals via `message_end`/`turn_end` + `ctx.getContextUsage()`. In the same `"context"` handler as Story 2, after archive placeholders are applied, append a `<system-reminder>…</system-reminder>` text block to the last user message on a cadence (every N turns). Gauge text uses the shared spec's four locked severity bands (`<30%`, `30-60%`, `61-80%`, `>80%`, with `PRUNE NOW` in the urgent band). Optionally mirror status to `ctx.ui.setStatus("bonsai", ...)` as an additional human-visible indicator, but never as a substitute.
-**Implementation Plan:** `.agents/plans/epic-port-context-bonsai/story-port-context-bonsai.4-context-gauge.md`
+**Implementation Plan:** `.agents/plans/epic-pi-port/story-port-context-bonsai.4-context-gauge.md`
 
 ### Story 5: End-to-end test→fix→test validation loop
 **Size:** Medium
 **Description:** Write a Pi-native end-to-end validation protocol (`pi_context_bonsai/docs/e2e-testing.md`) and automation harness (`test/e2e/run-e2e.sh` + `assert.mjs`) built on the prerequisite research document `.agents/research/pi-e2e-interaction-baseline.md`. Run the resulting suite in a test→diagnose→fix→re-test loop covering seven scenarios (extension load, prune, retrieve, reload persistence, gauge cadence, same-turn prune+retrieve no-op, secret prune oracle). Every fix applied during the loop is accompanied by a regression test backfilled into Stories 1–4's unit/integration suite. Story complete when `run-e2e.sh --all` exits 0 against the pinned provider/model.
-**Implementation Plan:** `.agents/plans/epic-port-context-bonsai/story-port-context-bonsai.5-e2e-test-fix-loop.md`
+**Implementation Plan:** `.agents/plans/epic-pi-port/story-port-context-bonsai.5-e2e-test-fix-loop.md`
 
 ## Dependencies and Integration
 
