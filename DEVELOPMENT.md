@@ -1,6 +1,6 @@
 # Development
 
-This repo is the coordination point for shared Context Bonsai behavior across agent harnesses.
+This repo coordinates shared Context Bonsai behavior across agent harnesses. It owns the shared spec, per-agent specs, validation templates, harness submodule pins, and side-repo submodule pins.
 
 ## Spec-First Workflow
 
@@ -16,7 +16,7 @@ Use this order:
 
 Do not treat one harness implementation as the new contract by itself. If behavior should become shared, move it into the spec first, then bring implementations up to spec.
 
-## Repo Classes
+## Repository Layout
 
 Harness repos are the agent runtimes:
 
@@ -39,14 +39,15 @@ Side repos are Context Bonsai projects owned by this workspace:
 - `codex_context_bonsai`
 - `gemini-cli_context_bonsai`
 - `kilo_context_bonsai`
+- `pi_context_bonsai`
 
-Side repos should use `origin` for the `Vibecodelicious` repo. They should not have `upstream`. Only `opencode_context_bonsai_plugin` and `tweakcc_context_bonsai` may also have a `local` remote that points to their earlier local source lineage.
+Published side repos should use `origin` for the `Vibecodelicious` repo. They should not have `upstream`. A temporary local-bare `origin` is acceptable only before the published remote is wired. Only `opencode_context_bonsai_plugin` and `tweakcc_context_bonsai` may also have a `local` remote that points to earlier local source lineage.
 
 ## Carrying Patches on Upstream
 
 Each harness fork carries a small set of integration patches on top of the upstream harness's current release. The fork's default branch is the patch series on current upstream — rewritten every time we adopt a new upstream release. The pattern matches Debian's kernel patches and Asahi Linux's kernel fork: the branch ref means "our patches on current upstream," not "an immutable history."
 
-### Per-cycle steps
+### Per-Cycle Steps
 
 For each harness fork, per upstream release adopted:
 
@@ -62,7 +63,7 @@ For each harness fork, per upstream release adopted:
 
 ### Disciplines
 
-- **Keep the patch series clean.** Each commit is a single concern, properly separated and reviewable on its own. No fix or fixup commits — if a rebase exposes a problem with a patch, fold the correction into the patch that introduced it.
+- **Keep the patch series clean.** Each commit is a single concern, properly separated and reviewable on its own. No fix or fixup commits: if a rebase exposes a problem with a patch, fold the correction into the patch that introduced it.
 - **The harness fork's default branch is intentionally git-history-unstable.** Anyone bookmarking a specific commit should use the tag from step 4 instead of the branch ref.
 - **Preserve retired chains with descriptive branch names** like `surgical_compaction_pre_plugin` when replacing an old patch series. Don't rely on GC reachability for commits someone might want to revisit.
 
@@ -79,10 +80,10 @@ Side-repo READMEs should focus on:
 
 Side-repo `DEVELOPMENT.md` files should contain maintainer details, build/test commands, implementation boundaries, and links back to the shared spec.
 
-## TODO
+## Backlog
 
-- [ ] Automated per-agent rebase/re-implementation to make sure Context Bonsai works on the latest release of each supported agent.
-- [ ] Forward-port planning contract: before implementing a port against a new host release, require the parent epic to pin the exact target release and define reproducible validation artifacts. For patched, minified, or closed-source hosts, the plan must record the host version/platform, extraction tool/version, reproduction command, artifact checksum, and evidence expected from that artifact. Local installs may be used only to recreate the pinned target artifact, not as ambient truth; credentials must never be part of validation artifacts.
-- [ ] Automated e2e test for per-agent user-installation instructions.
-- [ ] Automated propagation of spec changes from the main spec to per-agent specs.
-- [ ] Submodule `opencode_context_bonsai_plugin` — clean commit history rewrite.
+- Automated per-agent rebase/re-implementation to make sure Context Bonsai works on the latest release of each supported agent.
+- Forward-port planning contract: before implementing a port against a new host release, require the parent epic to pin the exact target release and define reproducible validation artifacts. For patched, minified, or closed-source hosts, the plan must record the host version/platform, extraction tool/version, reproduction command, artifact checksum, and evidence expected from that artifact. Local installs may be used only to recreate the pinned target artifact, not as ambient truth; credentials must never be part of validation artifacts.
+- Automated e2e test for per-agent user-installation instructions.
+- Automated propagation of spec changes from the main spec to per-agent specs.
+- Submodule `opencode_context_bonsai_plugin`: clean commit history rewrite.
