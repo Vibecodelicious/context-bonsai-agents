@@ -1,0 +1,63 @@
+{
+  "schema_note": "One row per required validation command, captured against UNMODIFIED upstream v1.15.7 in the rebase worktree before any replay commit landed. Toolchain note: upstream v1.15.7 pins packageManager bun@1.3.14 and packages/script enforces ^1.3.14; the worktree's bun was upgraded 1.3.13 -> 1.3.14 (a toolchain provisioning action, not a code change) so r05 could build. r05 is recorded green at bun@1.3.14.",
+  "frozen_upstream_head_sha": "5451227deb5a502afe44e1664e81df7ecb208ed1",
+  "frozen_source_head_sha": "4d88b953624c869122d4b37c4cbae01fd7a0f47e",
+  "bun_version": "1.3.14",
+  "rows": [
+    {
+      "row_id": "r01",
+      "command": "bun test test/tool/registry.test.ts test/session/message-v2.test.ts test/session/session.test.ts",
+      "working_directory": "packages/opencode",
+      "frozen_upstream_head_sha": "5451227deb5a502afe44e1664e81df7ecb208ed1",
+      "frozen_source_head_sha": "4d88b953624c869122d4b37c4cbae01fd7a0f47e",
+      "exit_code": 0,
+      "result": "55 pass, 0 fail, 103 expect() calls across 3 files",
+      "artifact_path": ".agent_tmp/baseline-r01.log",
+      "provenance_ref": "git rev-parse HEAD == 5451227deb5a502afe44e1664e81df7ecb208ed1 (unmodified upstream worktree)"
+    },
+    {
+      "row_id": "r02",
+      "command": "test ! -f test/session/context-bonsai.test.ts && echo missing-as-expected || (echo unexpected-presence && false)",
+      "working_directory": "packages/opencode",
+      "frozen_upstream_head_sha": "5451227deb5a502afe44e1664e81df7ecb208ed1",
+      "frozen_source_head_sha": "4d88b953624c869122d4b37c4cbae01fd7a0f47e",
+      "exit_code": 0,
+      "result": "missing-as-expected",
+      "artifact_path": ".agent_tmp/baseline-r02.log",
+      "provenance_ref": "git ls-files packages/opencode/test/session/context-bonsai.test.ts -> empty (file absent on upstream; added by ec63292d)"
+    },
+    {
+      "row_id": "r03",
+      "command": "bun typecheck",
+      "working_directory": "packages/opencode",
+      "frozen_upstream_head_sha": "5451227deb5a502afe44e1664e81df7ecb208ed1",
+      "frozen_source_head_sha": "4d88b953624c869122d4b37c4cbae01fd7a0f47e",
+      "exit_code": 0,
+      "result": "tsgo --noEmit clean (no diagnostics)",
+      "artifact_path": ".agent_tmp/baseline-r03.log",
+      "provenance_ref": "git rev-parse HEAD == 5451227deb5a502afe44e1664e81df7ecb208ed1 (unmodified upstream worktree)"
+    },
+    {
+      "row_id": "r04",
+      "command": "bun typecheck",
+      "working_directory": "packages/plugin",
+      "frozen_upstream_head_sha": "5451227deb5a502afe44e1664e81df7ecb208ed1",
+      "frozen_source_head_sha": "4d88b953624c869122d4b37c4cbae01fd7a0f47e",
+      "exit_code": 0,
+      "result": "tsgo --noEmit clean (no diagnostics)",
+      "artifact_path": ".agent_tmp/baseline-r04.log",
+      "provenance_ref": "git rev-parse HEAD == 5451227deb5a502afe44e1664e81df7ecb208ed1 (unmodified upstream worktree)"
+    },
+    {
+      "row_id": "r05",
+      "command": "bun turbo run build --filter=opencode",
+      "working_directory": "worktree root",
+      "frozen_upstream_head_sha": "5451227deb5a502afe44e1664e81df7ecb208ed1",
+      "frozen_source_head_sha": "4d88b953624c869122d4b37c4cbae01fd7a0f47e",
+      "exit_code": 0,
+      "result": "build succeeded at bun@1.3.14 (1 successful, 1 total). First attempt at bun@1.3.13 failed with upstream packageManager guard 'requires bun@^1.3.14'; resolved by upgrading the worktree toolchain bun 1.3.13 -> 1.3.14. No code change involved.",
+      "artifact_path": ".agent_tmp/baseline-r05.log",
+      "provenance_ref": "git rev-parse HEAD == 5451227deb5a502afe44e1664e81df7ecb208ed1 (unmodified upstream worktree); binary at packages/opencode/dist/opencode-linux-x64/bin/opencode"
+    }
+  ]
+}
