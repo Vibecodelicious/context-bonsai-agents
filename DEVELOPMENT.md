@@ -45,14 +45,21 @@ Published side repos should use `origin` for the `Vibecodelicious` repo. They sh
 
 ## Carrying Patches on Upstream
 
-Each harness fork carries a small set of integration patches on top of the upstream harness's current release. The fork's default branch is the patch series on current upstream — rewritten every time we adopt a new upstream release. The pattern matches Debian's kernel patches and Asahi Linux's kernel fork: the branch ref means "our patches on current upstream," not "an immutable history."
+Each harness fork carries a small chain of commits on top of the upstream harness's current release. The chain is typically two kinds:
+
+- **Integration patches** — narrow host-side modifications that expose hooks the side-repo bonsai code depends on.
+- **Fork-only doc commits** — for example, a signpost README on the fork's default branch that points readers at the bonsai-coordinated install path in the parent repo.
+
+All commits in the chain rebase forward together each cycle; the doc commits are not separated out and do not lag the integration patches.
+
+The fork's default branch is this chain on current upstream — rewritten every time we adopt a new upstream release. The pattern matches Debian's kernel patches and Asahi Linux's kernel fork: the branch ref means "our chain on current upstream," not "an immutable history."
 
 ### Per-Cycle Steps
 
 For each harness fork, per upstream release adopted:
 
 1. **Fetch upstream** in the harness fork (`git fetch upstream`) and identify the new release tag.
-2. **Rebase the patch series** onto the new upstream tag. Conflicts are usually surgical because the patch series is small.
+2. **Rebase the chain** onto the new upstream tag. Conflicts are usually surgical because the chain is small.
 3. **Validate the rebased build.** Unit and integration tests in the harness must pass.
 4. **Tag the rebase point** with a name that pins both versions, e.g., `bonsai/v1-on-opencode-0.5.34`. The tag gives the rebased state a durable name independent of the branch ref that will be rewritten again next cycle.
 5. **Run Protocol A** from [`docs/context-bonsai-e2e-template.md`](docs/context-bonsai-e2e-template.md) against the rebuilt binary. A rebase conflict can resolve to passing type and unit tests while still breaking the host-side hooks Context Bonsai depends on. Protocol A is the load-bearing check before publishing.
@@ -63,9 +70,9 @@ For each harness fork, per upstream release adopted:
 
 ### Disciplines
 
-- **Keep the patch series clean.** Each commit is a single concern, properly separated and reviewable on its own. No fix or fixup commits: if a rebase exposes a problem with a patch, fold the correction into the patch that introduced it.
+- **Keep the chain clean.** Each commit is a single concern, properly separated and reviewable on its own. No fix or fixup commits: if a rebase exposes a problem with a commit, fold the correction into the commit that introduced it.
 - **The harness fork's default branch is intentionally git-history-unstable.** Anyone bookmarking a specific commit should use the tag from step 4 instead of the branch ref.
-- **Preserve retired chains with descriptive branch names** like `surgical_compaction_pre_plugin` when replacing an old patch series. Don't rely on GC reachability for commits someone might want to revisit.
+- **Preserve retired chains with descriptive branch names** like `surgical_compaction_pre_plugin` when replacing an old chain. Don't rely on GC reachability for commits someone might want to revisit.
 
 ## Documentation Rules
 
