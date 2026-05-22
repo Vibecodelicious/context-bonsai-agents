@@ -62,11 +62,13 @@ For each harness fork, per upstream release adopted:
 2. **Rebase the chain** onto the new upstream tag. Conflicts are usually surgical because the chain is small.
 3. **Validate the rebased build.** Unit and integration tests in the harness must pass.
 4. **Tag the rebase point** with a name that pins both versions, e.g., `bonsai/v1-on-opencode-0.5.34`. The tag gives the rebased state a durable name independent of the branch ref that will be rewritten again next cycle.
-5. **Run Protocol A** from [`docs/context-bonsai-e2e-template.md`](docs/context-bonsai-e2e-template.md) against the rebuilt binary. A rebase conflict can resolve to passing type and unit tests while still breaking the host-side hooks Context Bonsai depends on. Protocol A is the load-bearing check before publishing.
-6. **Force-push the harness branch** with `--force-with-lease`.
-7. **Advance the parent's submodule pin** to the new harness tip on a non-`main` working branch.
-8. **End-to-end-validate the submodule pair.** Clone the parent on a fresh machine, follow the published install README, run Protocol A against the binary built from the parent's pinned state. This is the "thoroughly tested" gate.
-9. **Fast-forward parent `main`** to the validated pin advance. Parent `main` advances only when step 8 has passed — never on theory.
+5. **Run Protocol A** from [`docs/context-bonsai-e2e-template.md`](docs/context-bonsai-e2e-template.md) against the rebuilt binary. A rebase conflict can resolve to passing type and unit tests while still breaking the host-side hooks Context Bonsai depends on. Protocol A is the load-bearing behavioral check against the freshly built binary.
+6. **Advance the parent's submodule pin** to the new harness tip on a non-`main` working branch, locally. Do not push yet.
+7. **Run the pre-publish install gate.** Run the installation e2e in pre-publish mode against the pin-advanced pair (see [`docs/installation-e2e-template.md`](docs/installation-e2e-template.md) "Run Mode"); nothing is pushed. `PASS` authorizes step 8. `FAIL` means fix the README or install path and re-run before any push. `BLOCKED` means the gate did not run (environmental precondition) — resolve it and re-run; never push on a `BLOCKED`.
+8. **Publish.** Only after step 7 is `PASS`: force-push the harness branch with `--force-with-lease`, push the port's submodule, and push the parent working branch. The push is the point of no easy return, so it follows the gate, never precedes it.
+9. **Fast-forward parent `main`** to the step-6 working-branch tip (now validated and pushed), then push `main`. Parent `main` advances only when steps 7 and 8 have completed — never on theory.
+
+Steps 5 and 7 are distinct checks: step 5 proves the freshly built binary behaves; step 7 proves a clean machine can install the pinned pair from the documented README and reach that same behavior.
 
 ### Disciplines
 

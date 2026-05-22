@@ -76,6 +76,63 @@ Two channels are useful during a run:
 
 Capture pane state to artifact files so the verdict is auditable.
 
+## Run Mode: Pre-Publish vs Post-Publish
+
+This template runs in one of two modes. The mode changes only where the clone comes from. Everything after the clone — build, tool-load verification, smoke calls — is identical in both modes.
+
+**Post-publish.** Validates the live published artifact. Phase 2 runs the README's clone commands verbatim against the published remotes. Use this to confirm that what users actually clone installs and works.
+
+**Pre-publish.** The gate that must pass *before* a release cycle pushes anything to the canonical remotes — the published `Vibecodelicious` repos that `origin` points at (see DEVELOPMENT.md "Per-Cycle Steps"). It proves the *submodule pair* (the harness submodule plus its `_context_bonsai` side submodule; for OpenCode, `opencode` + `opencode_context_bonsai_plugin`) installs from a clean machine using only local, unpushed state, so the push happens only after the install is known good. The state being validated lives on the *pin-advanced working branch*: the non-`main` parent branch on which the submodule pins have been advanced to the new harness tip but not yet pushed (DEVELOPMENT.md step 6). Rules:
+
+- **All sources are local.** The parent repo and the port's submodule pair are sourced from local copies, never the published remotes. The canonical remotes are not touched until the run is green.
+- **The submodule redirection is mandatory, not optional.** Cloning the parent locally while letting submodules resolve from the published remotes would require pushing the submodule first — which is the publish this gate exists to precede. If the submodules are not also local, the run is not a pre-publish run.
+- **Push nothing.** No `git push` to any canonical remote occurs during a pre-publish run.
+
+### Pre-publish: making local state look like the published remotes
+
+Produce a `git bundle` for the parent and for each submodule the port's README initializes, each at the exact pin-advanced commit. Name each bundle file to match the tail of its published URL — the `.git` name in the submodule's `.gitmodules` URL, which is not always the submodule path (e.g., the `kilo` submodule's URL tail is `kilocode.git`, and `pi`'s is `pi-mono.git`). The matching name lets one URL rewrite map every source:
+
+```sh
+mkdir -p /tmp/bundles
+# Parent: bundle HEAD plus the pin-advanced working branch (NOT main, which is not advanced
+# yet). Include HEAD so the clone checks out a populated tree; a branch-only bundle leaves
+# HEAD unresolved and clones an empty working tree.
+git -C <parent> bundle create /tmp/bundles/context-bonsai-agents.git HEAD <working-branch>
+# Port submodule pair (OpenCode shown; substitute the port's two submodule URL tails):
+git -C <parent>/opencode bundle create /tmp/bundles/opencode.git --all
+git -C <parent>/opencode_context_bonsai_plugin bundle create /tmp/bundles/opencode_context_bonsai_plugin.git --all
+```
+
+On the fresh machine, point git at the bundles with a scoped config, then run the README's clone and submodule-init commands verbatim — the literal HTTPS URLs resolve to `/tmp/bundles/*.git`:
+
+```sh
+export GIT_CONFIG_GLOBAL=/tmp/rebase-e2e-gitconfig
+git config --global url./tmp/bundles/.insteadOf https://github.com/Vibecodelicious/
+# Local file:// submodule clones are refused by default since git 2.38 (CVE-2022-39253);
+# the README's `git submodule update --init` needs this or it fails "transport 'file' not allowed".
+git config --global protocol.file.allow always
+```
+
+The scoped `GIT_CONFIG_GLOBAL` keeps both settings out of the machine's real git config. After the README clone, run `git checkout <working-branch>` before the README's build/install commands (Phase 2) so the tree is on the pin-advanced commit; the `HEAD <working-branch>` bundle above makes that checkout available.
+
+This config is the one sanctioned exception to Phase 2's "execute verbatim, do not substitute" rule, and it is narrow: it redirects the clone/submodule source and permits local-path submodule clones, nothing more. If any *other* command must change to install from local sources, that is a finding about the README, not license to edit further.
+
+### Pre-publish: transport to the fresh machine
+
+The sprite excludes the author's local state, so the bundles must be carried to it. `sprite exec` uploads files before running a command via the repeatable `--file <source:dest>` flag:
+
+```sh
+sprite exec \
+  --file /tmp/bundles/context-bonsai-agents.git:/tmp/bundles/context-bonsai-agents.git \
+  --file /tmp/bundles/opencode.git:/tmp/bundles/opencode.git \
+  --file /tmp/bundles/opencode_context_bonsai_plugin.git:/tmp/bundles/opencode_context_bonsai_plugin.git \
+  -- mkdir -p /tmp/bundles
+```
+
+After upload, run the scoped-config setup and the README install commands inside the sprite via `sprite exec` (or an interactive `sprite console` / tmux session for a TUI host, per "Driving the Sprite").
+
+If the harness cannot reach the sprite, run the pre-publish clone in a clean temporary directory on the maintainer's own machine instead: the bundle, scoped-config, clone, and README steps above are identical — only the transport is skipped. Record that this local variant shares the host toolchain and therefore does not catch the toolchain blind spots the sprite exists to expose (see "Why The Sprite"). Choose the strongest option the harness allows and record which one the run used.
+
 ## Phases
 
 ### Phase 0 — Harness setup (before the test begins)
@@ -92,6 +149,8 @@ Apply one of the two fresh-machine patterns. Record the sprite name, the checkpo
 ### Phase 2 — Execute documented install commands verbatim
 
 Copy each command from the port's operator README and execute it inside the sprite in the documented order. Do NOT substitute, abbreviate, or extend. If a command fails or its output diverges from what the README claims, that is itself a finding.
+
+In pre-publish mode, the only deviation is the source rewrite set up in "Run Mode" above; the README commands themselves still run verbatim. See that section for the rule and its single sanctioned exception.
 
 If the README supports multiple platforms, the run record states which platform was validated. (Per the cross-agent spec's Operator Documentation Contract, install coverage is bounded by the port's declared support matrix.)
 
