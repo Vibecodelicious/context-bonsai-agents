@@ -102,10 +102,10 @@ Implementation is blocked until Basil approves this plan or gives different inst
 
 - Approval Status: `approved`
 - Approval Citation: `Basil: "Yes, existing dirty diffs can be dropped. Approve"`
-- Plan Commit Hash: `none`
-- Ready-for-Orchestration: `no`
+- Plan Commit Hash: `5b2a6a3`
+- Ready-for-Orchestration: `yes`
 
-After Basil approves this plan, commit this plan artifact before orchestration begins. Update this section with the approval citation, plan commit hash, and `Ready-for-Orchestration: yes`; implementation must not start while those fields are unresolved.
+This plan artifact was committed before orchestration begins. Implementation may start only through the orchestration flow, using this committed plan as the source of truth.
 
 ## Validation Loop Results
 
@@ -113,5 +113,5 @@ After Basil approves this plan, commit this plan artifact before orchestration b
 - Ambiguity check: `iteration 1 found dirty-diff handling and anchors.ts target semantics ambiguous; plan updated to use committed HEAD as conceptual baseline and require no final anchors.ts diff`
 - Worktree artifact risk check: `approved by Basil; existing dirty diffs may be dropped and anchors.ts must have no final diff`
 - Final validation: `READY FOR BASIL APPROVAL; validator confirmed raw secret cleanup trap, no-tool enforcement, session discovery, UUID generation, dirty-file escalation, anchors.ts no-diff rule, and approval/commit closure`
-- Plan-commit status check: `pending approval and commit`
+- Plan-commit status check: `closed by commit 5b2a6a3; this follow-up status update records the hash and readiness`
 - Iterations run: `3`
