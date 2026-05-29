@@ -155,6 +155,8 @@ The prune tool MUST be exposed to the model as `context-bonsai-prune`.
 - Success output SHOULD include the resolved range and summarize what was archived.
 - Failure output MUST be plain text, deterministic, and actionable.
 - Failure output MUST NOT mutate transcript state.
+- A deterministic failure or refusal MUST be surfaced through the host's error channel (for example, MCP `isError: true`) so it is never presented to the host or model as a successfully-completed operation. This governs the error flag, not the content form: the failure body remains plain text per the rule above, and `isError` MUST NOT be set on a successful operation.
+- Runtime/patch detection that gates whether a prune may proceed MUST be launch-shape independent: it MUST identify the running host binary regardless of how that binary was launched (for example, a directly-invoked version-named native binary, a launcher shim, or a `--resume` resume), and MUST NOT rely on launcher naming or invocation flags. When the running binary genuinely cannot be identified, detection MUST fail closed (refuse) rather than falsely accept or falsely refuse.
 
 ### 3. Retrieve Tool
 
@@ -174,7 +176,7 @@ The retrieve tool MUST be exposed to the model as `context-bonsai-retrieve`.
 #### Output rules
 
 - Success output SHOULD indicate the restored range.
-- Missing anchor or missing archive state MUST return deterministic plain-text errors.
+- Missing anchor or missing archive state MUST return deterministic plain-text errors, surfaced through the host's error channel per the prune Output rules (e.g. MCP `isError: true`).
 
 ### 4. Archive Placeholder Rendering
 

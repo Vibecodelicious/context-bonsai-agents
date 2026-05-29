@@ -32,7 +32,7 @@ This document specializes the shared Context Bonsai contract for Anthropic's Cla
 |---|---|---|
 | MCP tool registration | Verified | Story 7 confirmed current Claude Code 2.1.x uses `~/.claude.json`: top-level `mcpServers` is a map, and per-project entries under `projects` can also contain `mcpServers` maps. |
 | Persistent transcript | Verified | `~/.claude/projects/<project-hash>/<session-id>.jsonl` is append-only JSONL of `tool_use` / `tool_result` / text blocks |
-| Session discovery from MCP | Verified | `mcp-server/index.ts` walks `/proc/<pid>` to find the parent Claude Code process; cmdline contains `--resume <session-id>` |
+| Session discovery from MCP | Verified | `mcp-server/index.ts` walks `/proc/<pid>` to find the Claude Code ancestor process. Session id comes from `--resume <session-id>` when present; otherwise discovery falls back to a cwd-based match against `history.jsonl`, so it does not depend on `--resume`. The patch-presence guard identifies the running binary via each ancestor's `/proc/<pid>/exe`, independent of launch shape |
 | In-band gauge | Partial | No public token-budget API. tweakcc patch can read internal state; otherwise gauge is delivered only as text inside prune/retrieve tool responses |
 | System-guidance injection | Gap | No MCP-side system-prompt API. Tool descriptions are the only model-visible MCP-controlled text |
 | Transcript mutation | Verified (with caveat) | The MCP server can rewrite the JSONL on disk to insert placeholder messages and mark archived ranges. A transcript-rewrite seam, currently the tweakcc `archivedFilter` patch or an equivalent, is required to hide archived ranges in the live transcript view |
@@ -42,7 +42,7 @@ This document specializes the shared Context Bonsai contract for Anthropic's Cla
 
 - MCP server registration: `~/.claude.json` `mcpServers.context-bonsai.{command,args}` or per-project `projects.<project>.mcpServers.context-bonsai.{command,args}` — stdio MCP transport; tool names exposed as `mcp__context-bonsai__context-bonsai-prune` / `mcp__context-bonsai__context-bonsai-retrieve` per Claude Code's MCP-prefix convention.
 - Session JSONL location: `~/.claude/projects/<project-hash>/<session-id>.jsonl`. Each line is one of `{ type: "user" | "assistant" | "summary", uuid, parentUuid, timestamp, message?, summary?, ... }`. See `tweakcc_context_bonsai/src/types.ts` for the canonical `SessionMessage` union.
-- Process discovery: `/proc/<pid>` walk from the MCP server's parent process up the chain, parsing `cmdline` for `--resume <session-id>` to identify the live Claude Code session. See `tweakcc_context_bonsai/mcp-server/index.ts`.
+- Process discovery: `/proc/<pid>` walk from the MCP server's parent process up the chain. Session discovery parses `cmdline` for `--resume <session-id>` when present, and otherwise falls back to a cwd-based `history.jsonl` match, so it works for directly-launched sessions with no `--resume`. The patch-presence guard identifies the running binary by reading each ancestor's `/proc/<pid>/exe` link, independent of `argv[0]` naming or `--resume`. See `tweakcc_context_bonsai/mcp-server/index.ts`.
 - Archive marker file: `~/.claude/archived-<session-id>.json` — written by `addArchivedMarkerEntries` in `tweakcc_context_bonsai/src/lib/compact.ts`. Read by the required transcript-rewrite seam to hide archived ranges in the live transcript.
 
 ## Unverified Or Weak Areas
@@ -92,6 +92,7 @@ This document specializes the shared Context Bonsai contract for Anthropic's Cla
 - If the transcript-rewrite seam is absent or cannot be verified, the prune tool MUST return a deterministic plain-text error and MUST NOT write `~/.claude/archived-<session-id>.json` or mutate the session JSONL.
 - If `~/.claude/archived-<session-id>.json` cannot be written (filesystem permissions, disk full), the MCP tool MUST roll back any partial JSONL mutation and return an error.
 - Pattern ambiguity, after the prune-wrapper filter, MUST return the deterministic plain-text error verbatim per the cross-agent spec.
+- Every deterministic prune/retrieve failure or refusal MUST be returned as an MCP result with `isError: true` so Claude Code does not render the refusal as a successfully-completed tool call. This sets the error flag only; the body stays plain text per the cross-agent spec §2 Output rules. The patch-presence guard that decides whether a prune may proceed MUST identify the running Claude binary independent of launch shape — directly-invoked version-named native binary, `claude` shim, or `claude --resume` — and MUST fail closed when no Claude ancestor binary can be identified.
 
 ## Patch-Anchor Evidence Requirements
 
