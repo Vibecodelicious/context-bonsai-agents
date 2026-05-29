@@ -1,0 +1,107 @@
+[
+  {
+    "anchor_id": "archived-filter.visibility",
+    "source_version": "2.1.143",
+    "target_version": "2.1.156",
+    "bucket": "updated_anchor",
+    "replay_action": "update-selector",
+    "mapping_type": "1:1",
+    "target_paths": [
+      "patches/anchors.ts",
+      "patches/archived-filter.patch.test.ts"
+    ],
+    "rationale": "The provider message map's user/assistant converters renamed Bp5/pp5 (2.1.143) to hLz/SLz (2.1.156) and the host expression changed from a local binding (let D=H.map(...)) to a comma-sequence return after the tengu_api_cache_breakpoints telemetry call (return d(\"tengu_api_cache_breakpoints\",{...}),H.map(...)). The selector was re-derived to match the seam structurally (cache-breakpoint telemetry, user/api_system/else converter branches, two distinct converters) and the messageVar extractor extended for the comma-sequence shape; minScore 30 / minMargin 10 unchanged; unique candidate at score 105. Behavioral 2.1.156 regression tests added.",
+    "evidence_ref": "tweakcc_context_bonsai/docs/semantic-anchor-analysis-2.1.156.md#archived-filtervisibility"
+  },
+  {
+    "anchor_id": "context-bonsai-gauge.attachment-pipeline",
+    "source_version": "2.1.143",
+    "target_version": "2.1.156",
+    "bucket": "unchanged_anchor",
+    "replay_action": "verify-unchanged",
+    "mapping_type": "1:1",
+    "target_paths": [
+      "patches/anchors.ts"
+    ],
+    "rationale": "The attachment-pipeline selector resolves uniquely against the frozen 2.1.156 bundle (function bW4(H,$) with hook_permission_decision dedup, score 50, 13 candidates) with no selector change; minScore 15 / minMargin 10 unchanged.",
+    "evidence_ref": "tweakcc_context_bonsai/docs/semantic-anchor-analysis-2.1.156.md#context-bonsai-gaugeattachment-pipeline"
+  },
+  {
+    "anchor_id": "context-bonsai-gauge.reminder-render",
+    "source_version": "2.1.143",
+    "target_version": "2.1.156",
+    "bucket": "unchanged_anchor",
+    "replay_action": "verify-unchanged",
+    "mapping_type": "1:1",
+    "target_paths": [
+      "patches/anchors.ts"
+    ],
+    "rationale": "The reminder-render switch selector resolves uniquely against the frozen 2.1.156 bundle (file/todo_reminder switch, score 40, 1 candidate) with no selector change; minScore 15 / minMargin 10 unchanged.",
+    "evidence_ref": "tweakcc_context_bonsai/docs/semantic-anchor-analysis-2.1.156.md#context-bonsai-gaugereminder-render"
+  },
+  {
+    "anchor_id": "context-bonsai-gauge.token-usage",
+    "source_version": "2.1.143",
+    "target_version": "2.1.156",
+    "bucket": "unchanged_anchor",
+    "replay_action": "verify-unchanged",
+    "mapping_type": "1:1",
+    "target_paths": [
+      "patches/anchors.ts"
+    ],
+    "rationale": "The token-usage helper selector resolves uniquely against the frozen 2.1.156 bundle (function Wu5 usage accumulator with contextWindow/maxOutputTokens, score 47, 9 candidates) with no selector change; minScore 15 / minMargin 10 unchanged.",
+    "evidence_ref": "tweakcc_context_bonsai/docs/semantic-anchor-analysis-2.1.156.md#context-bonsai-gaugetoken-usage"
+  },
+  {
+    "anchor_id": "message-content-ids.converter",
+    "source_version": "2.1.143",
+    "target_version": "2.1.156",
+    "bucket": "updated_anchor",
+    "replay_action": "update-scorer",
+    "mapping_type": "1:1",
+    "target_paths": [
+      "patches/anchors.ts"
+    ],
+    "rationale": "In 2.1.156 the greedy converter regex spilled the content-sanitizer helper I69(H) match across the function boundary into the assistant converter, tying it with the real user converter hLz at exactly minMargin (90 vs 80) so selection fail-closed with AnchorAmbiguousError. A scorer signal for the provider-converter 4-arg signature (P1,P2=!1 was added (+20), distinguishing the real converter (hLz, score 110) from the single-arg sanitizer (I69, 80) by margin 30; minScore 35 / minMargin 10 unchanged. Selected user converter hLz at offset 13107940.",
+    "evidence_ref": "tweakcc_context_bonsai/docs/semantic-anchor-analysis-2.1.156.md#message-content-idsconverter"
+  },
+  {
+    "anchor_id": "runtime-helper.config-dir",
+    "source_version": "2.1.143",
+    "target_version": "2.1.156",
+    "bucket": "unchanged_anchor",
+    "replay_action": "verify-unchanged",
+    "mapping_type": "1:1",
+    "target_paths": [
+      "patches/discovery.ts"
+    ],
+    "rationale": "findRuntimeHelpers resolves the config-dir getter uniquely against the frozen 2.1.156 bundle (l8, honoring CLAUDE_CONFIG_DIR, 6 history.jsonl/projects/todos join call sites) with no discovery change.",
+    "evidence_ref": "tweakcc_context_bonsai/docs/semantic-anchor-analysis-2.1.156.md#runtime-helperconfig-dir"
+  },
+  {
+    "anchor_id": "runtime-helper.fs",
+    "source_version": "2.1.143",
+    "target_version": "2.1.156",
+    "bucket": "unchanged_anchor",
+    "replay_action": "verify-unchanged",
+    "mapping_type": "1:1",
+    "target_paths": [
+      "patches/discovery.ts"
+    ],
+    "rationale": "findRuntimeHelpers resolves the fs getter uniquely against the frozen 2.1.156 bundle (U$, function U$(){return XI9}, repeated existsSync/readFileSync/writeFileSync call sites) with no discovery change.",
+    "evidence_ref": "tweakcc_context_bonsai/docs/semantic-anchor-analysis-2.1.156.md#runtime-helperfs"
+  },
+  {
+    "anchor_id": "runtime-helper.session-id",
+    "source_version": "2.1.143",
+    "target_version": "2.1.156",
+    "bucket": "unchanged_anchor",
+    "replay_action": "verify-unchanged",
+    "mapping_type": "1:1",
+    "target_paths": [
+      "patches/discovery.ts"
+    ],
+    "rationale": "findRuntimeHelpers resolves the session-id getter uniquely against the frozen 2.1.156 bundle (E$, function E$(){return nk()?.sessionId??d$.sessionId}, the optional-current-session shape) with no discovery change.",
+    "evidence_ref": "tweakcc_context_bonsai/docs/semantic-anchor-analysis-2.1.156.md#runtime-helpersession-id"
+  }
+]

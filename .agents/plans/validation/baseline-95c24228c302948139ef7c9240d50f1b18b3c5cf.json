@@ -1,0 +1,102 @@
+[
+  {
+    "row_id": "01-side-bun-install",
+    "command": "bun install (cwd tweakcc_context_bonsai)",
+    "frozen_target_package": "@anthropic-ai/claude-code@2.1.156",
+    "frozen_source_head_sha": "95c24228c302948139ef7c9240d50f1b18b3c5cf",
+    "exit_code": 0,
+    "result": "PASS",
+    "artifact_path": "/tmp/cc-bonsai-baseline/install.log",
+    "provenance_ref": "developer-iteration-1; no dependency changes (checked 196 installs, no changes)"
+  },
+  {
+    "row_id": "02-side-bun-test-pre",
+    "command": "bun test (cwd tweakcc_context_bonsai)",
+    "frozen_target_package": "@anthropic-ai/claude-code@2.1.156",
+    "frozen_source_head_sha": "95c24228c302948139ef7c9240d50f1b18b3c5cf",
+    "exit_code": 0,
+    "result": "PASS",
+    "artifact_path": "/tmp/cc-bonsai-baseline/test.log",
+    "provenance_ref": "developer-iteration-1 pre-change baseline; 159 pass, 0 fail; one SKIP (discovery against in-repo .artifacts bundle, stored out-of-repo)"
+  },
+  {
+    "row_id": "03-side-typecheck-pre",
+    "command": "bun run typecheck (cwd tweakcc_context_bonsai)",
+    "frozen_target_package": "@anthropic-ai/claude-code@2.1.156",
+    "frozen_source_head_sha": "95c24228c302948139ef7c9240d50f1b18b3c5cf",
+    "exit_code": 2,
+    "result": "FAIL",
+    "artifact_path": "/tmp/cc-bonsai-baseline/typecheck.log",
+    "provenance_ref": "developer-iteration-1 pre-existing baseline failure: mcp-server/index.test.ts(173,35): error TS2769 (Buffer.from(metadataBlock![1]) under noUncheckedIndexedAccess). Present at starting commit 95c24228, unrelated to the forward-port; carried as fail->fail (same identifier)"
+  },
+  {
+    "row_id": "04-artifact-evidence-2.1.156",
+    "command": "bun run e2e/native-e2e.ts artifact-evidence --bundle /tmp/cc-bonsai-artifacts/claude-code/2.1.156/native/extracted.js --manifest /tmp/cc-bonsai-artifacts/claude-code/2.1.156/native/manifest.json --out /tmp/cc-bonsai-e2e/2.1.156-artifact-evidence.json",
+    "frozen_target_package": "@anthropic-ai/claude-code@2.1.156",
+    "frozen_source_head_sha": "95c24228c302948139ef7c9240d50f1b18b3c5cf",
+    "exit_code": 0,
+    "result": "PASS",
+    "artifact_path": "/tmp/cc-bonsai-e2e/2.1.156-artifact-evidence.json",
+    "provenance_ref": "developer-iteration-1; all 5 anchor selections resolve, all 3 sentinels verify, semantic report docs/semantic-anchor-analysis-2.1.156.md passes required-section/field validation; bundle sha256 644a98ceac60fd0e979a268fdd0e090ed8aa197f53eb9b80e11c3629c3c9da9b"
+  },
+  {
+    "row_id": "05-side-bun-test-post",
+    "command": "bun test (cwd tweakcc_context_bonsai)",
+    "frozen_target_package": "@anthropic-ai/claude-code@2.1.156",
+    "frozen_source_head_sha": "95c24228c302948139ef7c9240d50f1b18b3c5cf",
+    "exit_code": 0,
+    "result": "PASS",
+    "artifact_path": "/tmp/cc-bonsai-baseline/test-final.log",
+    "provenance_ref": "developer-iteration-1 post-change; 161 pass, 0 fail (2 new 2.1.156 archived-filter behavioral tests added)"
+  },
+  {
+    "row_id": "06-side-typecheck-post",
+    "command": "bun run typecheck (cwd tweakcc_context_bonsai)",
+    "frozen_target_package": "@anthropic-ai/claude-code@2.1.156",
+    "frozen_source_head_sha": "95c24228c302948139ef7c9240d50f1b18b3c5cf",
+    "exit_code": 2,
+    "result": "FAIL",
+    "artifact_path": "/tmp/cc-bonsai-baseline/typecheck-final.log",
+    "provenance_ref": "developer-iteration-1 post-change; same pre-existing identifier mcp-server/index.test.ts(173,35): error TS2769; fail->fail (same identifier), not a regression"
+  },
+  {
+    "row_id": "07-live-apply-2.1.156",
+    "command": "bun run apply --path /home/basil/.local/share/claude/versions/2.1.156",
+    "frozen_target_package": "@anthropic-ai/claude-code@2.1.156",
+    "frozen_source_head_sha": "95c24228c302948139ef7c9240d50f1b18b3c5cf",
+    "exit_code": 0,
+    "result": "PASS",
+    "artifact_path": "/tmp/cc-bonsai-e2e/apply.log",
+    "provenance_ref": "developer-iteration-1 live; applied archived-filter, message-content-ids, context-bonsai-gauge; sentinels verified once each; claude mcp list reported context-bonsai Connected; reverted via apply:restore (0 sentinels) at completion"
+  },
+  {
+    "row_id": "08-live-e2e-08-prune-effect-2.1.156",
+    "command": "bun run e2e/native-e2e.ts prune-guard-live + prune-effect (direct versioned-path launch, no --resume)",
+    "frozen_target_package": "@anthropic-ai/claude-code@2.1.156",
+    "frozen_source_head_sha": "95c24228c302948139ef7c9240d50f1b18b3c5cf",
+    "exit_code": 0,
+    "result": "PASS",
+    "artifact_path": "/tmp/cc-bonsai-e2e/2.1.156-prune-effect.json",
+    "provenance_ref": "developer-iteration-1 live; bugShapeConfirmed true (argv0 versioned 2.1.156 path, no --resume); prune-effect PASS (archived range visible chars to 0, placeholder present, footprint dropped); retrieve restored range live"
+  },
+  {
+    "row_id": "09-live-protocol-a-oracle-2.1.156",
+    "command": "bun run e2e/native-e2e.ts protocol-a-oracle --session <post> --secret <invented> --marker <archived-sid.json>",
+    "frozen_target_package": "@anthropic-ai/claude-code@2.1.156",
+    "frozen_source_head_sha": "95c24228c302948139ef7c9240d50f1b18b3c5cf",
+    "exit_code": 0,
+    "result": "PASS",
+    "artifact_path": "/tmp/cc-bonsai-e2e/2.1.156-protocol-a-oracle.json",
+    "provenance_ref": "developer-iteration-1 live; secret appears only in archived original blocks (1 occurrence, 0 invalid); secret literal absent from prune patterns, summary, and index_terms"
+  },
+  {
+    "row_id": "10-live-e2e-04-gauge-2.1.156",
+    "command": "gauge cadence/severity live render drive",
+    "frozen_target_package": "@anthropic-ai/claude-code@2.1.156",
+    "frozen_source_head_sha": "95c24228c302948139ef7c9240d50f1b18b3c5cf",
+    "exit_code": 0,
+    "result": "PARTIAL",
+    "artifact_path": "tweakcc_context_bonsai/docs/e2e-results-2026-05-29-2.1.156.md",
+    "provenance_ref": "developer-iteration-1; gauge anchors resolve and the gauge patch composes/verifies against the frozen bundle, but live model-visible gauge cadence/severity rendering was not separately driven this cycle. Reviewer+judge exception requested per the plan allowance for gauge remaining partial"
+  }
+]
