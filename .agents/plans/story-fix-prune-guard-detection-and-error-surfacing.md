@@ -186,7 +186,7 @@ These are the source of truth for the developer's starting-state check and compl
 ## Plan Approval and Commit Status
 - Approval Status: approved
 - Approval Citation: Basil approved on 2026-05-29 ("Approve"); scope resolved single story + hard live gate same day.
-- Plan Commit Hash: (recorded in follow-up commit)
+- Plan Commit Hash: 511702d6d177238ca72a05c379eaaf194b54000c
 - Ready-for-Orchestration: yes
 
 ## Validation Loop Results
