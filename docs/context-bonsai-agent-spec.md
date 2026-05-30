@@ -147,6 +147,7 @@ The prune tool MUST be exposed to the model as `context-bonsai-prune`.
 - The resolved start must not come after the resolved end.
 - The selected range MUST NOT cut through incomplete or malformed tool-call history.
 - The selected range MUST NOT start or end inside an already-pruned range.
+- The transformed provider-bound transcript MUST remain valid for the provider API's message ordering rules. A successful prune MUST hide the archived range as one coherent provider-visible interval, including host/system/meta units inside that span that would otherwise remain visible or create invalid adjacency.
 - Mutation MUST be atomic from the model-visible perspective.
 - On success, the archive metadata is persisted and the next transformed transcript shows a placeholder instead of the archived content.
 
@@ -220,6 +221,7 @@ Each implementation MUST have a mechanism that rewrites the model-visible transc
 
 - archive placeholders appear in place of archived ranges
 - archived follower messages are omitted
+- provider-visible host/system/meta units inside archived ranges are omitted when the host maps them to provider messages
 - retrieval removes the placeholder effect and restores the original visible range
 - gauge text can be inserted in-band when cadence and usage conditions are met
 
