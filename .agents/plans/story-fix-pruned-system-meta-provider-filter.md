@@ -100,8 +100,8 @@ Every story plan MUST list the validation commands explicitly. These are the sou
 
 - Approval Status: approved
 - Approval Citation: user replied "approved" after final validation result
-- Plan Commit Hash: none
-- Ready-for-Orchestration: no
+- Plan Commit Hash: d68ab7c
+- Ready-for-Orchestration: yes
 
 ## Validation Loop Results
 
