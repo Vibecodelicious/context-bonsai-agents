@@ -19,7 +19,7 @@ One cycle = one new upstream release for one harness. The target release (git-fo
 2. Generates a cycle plan per the "Generated cycle-plan contract" (Part 1), binding every core and shape requirement to the slot values.
 3. Runs the generation validation loop, obtains plan approval, commits the plan.
 4. Executes the plan phase by phase; seals only when every seal gate passes.
-5. Performs routine maintenance: absorbs this cycle's friction back into this spec's Part 4 slots or flags core/shape gaps (see "Routine maintenance").
+5. Performs routine maintenance: absorbs this cycle's friction back into this spec's Part 4 slots or flags core/shape gaps (see "Routine maintenance"). This step also runs when step 4 (or any earlier step) ends in a STOP instead of a seal.
 
 All relative paths in this spec are from the parent repo root (`context-bonsai-agents/`).
 
@@ -100,7 +100,8 @@ The core invariant: every deviation from the plan's default path (out-of-scope f
 ## 1.10 Rerun safety
 
 - The replay workspace is shape-bound: git-fork replays in an isolated worktree with a deterministic, slot-defined name, never on the source branch in place (§2.5); the closed-artifact shape works in place in the side repo's working tree on its tracked branch (§3.5).
-- Preflight requires clean state (`git status --short` empty) in every repo the cycle touches.
+- Preflight requires clean state in every repo the cycle touches: `git status --short` empty, or containing only enumerated pre-existing dirty paths (next bullet).
+- Pre-existing dirty status paths: the invoker or the harness slot (Part 4) may enumerate status paths known to be dirty before the cycle and untouchable by it. The clean-state check passes when `git status --short` output contains only enumerated paths. Never stage, commit, revert, or otherwise absorb an enumerated path; list them in the plan as untouchable. Any non-enumerated dirty path still fails the preflight.
 - Pre-existing worktrees or artifacts from prior cycles are out of scope: do not delete or modify them; list them in the plan as untouchable if present.
 - Canonical machine-checked outputs contain no wall-clock timestamps and use stable sorts, so reruns produce identical artifacts.
 
@@ -134,7 +135,7 @@ Sealing a cycle requires all of the following, each machine-checkable, with hard
 9. Change-scope check: the realized diff touches only paths in the union of replay-set `target_paths` (or working-tree diff in pressure-test mode), with any exceptions approved per §1.7 **before** the offending change landed. If an out-of-scope path has already landed without an exception record: STOP and revert.
 10. No unresolved exception records, per the shape's exception-recording mechanism (§1.7).
 11. E2E release gate: pass evidence for the harness slot's required scenario set, or an explicit reviewer+judge-approved exception record (§1.7). Never record an e2e bypass exception without that approval.
-12. Spec immutability, as the exact asserting commands `test -f docs/agent-specs/forward-port-spec.md` and `test -z "$(git diff --name-only -- docs/agent-specs/forward-port-spec.md)"` — the spec still exists and a cycle run has not modified it (routine maintenance, 1.16, happens after seal as its own change).
+12. Spec immutability, as the exact asserting commands `test -f docs/agent-specs/forward-port-spec.md` and `test -z "$(git diff --name-only -- docs/agent-specs/forward-port-spec.md)"` — the spec still exists and a cycle run has not modified it (routine maintenance, 1.16, happens after the cycle ends as its own change).
 13. Reviewer and judge approvals recorded.
 14. The shape's release-gate steps completed in order (Part 2 §2.9 / Part 3 §3.8).
 
@@ -166,11 +167,12 @@ After generating a cycle plan and before requesting approval:
 
 ## 1.16 Routine maintenance
 
-After a cycle seals, the executor absorbs the cycle's friction back into this spec:
+After a cycle ends — sealed, or halted at a STOP — the executor attempts routine maintenance and records its outcome; a STOP does not waive this step. Maintenance absorbs the cycle's friction back into this spec:
 
 - Slot-level facts that changed (command sets, paths, registry locations) are updated in Part 4 with the cycle's evidence cited.
 - Anything that required an exception record, an unplanned STOP, or improvisation is recorded as either a Part 4 slot fix (if harness-local) or flagged in the maintenance report as a core/shape gap for the spec's owner tier — the stronger-model tier that, with the project owner, maintains Parts 1–3 and runs derivations (`docs/meta-loop-direction.md` §"End Goal", executor tiering). The routine executor edits Part 4 only; Parts 1–3 changes escalate.
 - Every stumble in the cycle gets a failure-attribution verdict (`docs/meta-loop-direction.md` §"Provisional Future Steps"): `SPEC-GAP` — the spec left a judgment call unresolved; fix the artifact, not the tiering — or `EXECUTOR-FAIL` — the spec was deterministic and the executor still failed.
+- On a STOP, the same duties apply to whatever the cycle reached before halting. When no slot-level fact changed, the maintenance report records that explicitly rather than skipping the step.
 
 ## 1.17 Escalation out of the routine path
 
@@ -192,9 +194,9 @@ For harnesses maintained as a fork carrying a small patch chain on the upstream 
 ## 2.1 Upstream identity and freeze
 
 - `UPSTREAM_REF` for a routine release cycle is the invoker-supplied new upstream **release tag** (per `DEVELOPMENT.md` per-cycle step 1), recorded as a full ref (`refs/tags/<tag>`). Branch refs (`refs/heads/*`, `refs/remotes/*`) are allowed when the cycle explicitly targets a branch; symbolic refs are rejected. Tags-as-default deliberately supersedes the prior meta-plan rule that treated tags as approval-requiring exceptions; the executed OpenCode cycle's one-off "Tag-as-Upstream Approval" record was an artifact of that superseded rule, and regenerated plans carry no such record.
-- Freeze: `git fetch --all --prune`, then `UPSTREAM_HEAD_SHA=$(git rev-parse --verify "$UPSTREAM_REF")`, persisted; 40-char check enforced. All subsequent commands use `$UPSTREAM_HEAD_SHA`.
+- Freeze: `git fetch --all --prune`; when `UPSTREAM_REF` is a tag, follow with an explicit tag fetch from the slot's upstream remote — `git fetch <upstream-remote> "refs/tags/<tag>:refs/tags/<tag>"` — because `--all --prune` honors each remote's configured refspec, and a heads-only refspec acquires no tags. Then `UPSTREAM_HEAD_SHA=$(git rev-parse --verify "$UPSTREAM_REF")`, persisted; 40-char check enforced. All subsequent commands use `$UPSTREAM_HEAD_SHA`.
 - `BASE_SHA` is computed, never asserted: `git merge-base "$UPSTREAM_HEAD_SHA" "$SOURCE_HEAD_SHA"`. A user-supplied `BASE_SHA` must equal the computed value or the cycle hard-fails.
-- Preflight re-verifies the frozen SHAs: clean `git status --short`, `git rev-parse` of source ref and upstream ref each equal to their frozen values.
+- Preflight re-verifies the frozen SHAs: clean state per §1.10 (its pre-existing dirty-path enumeration applies), `git rev-parse` of source ref and upstream ref each equal to their frozen values.
 
 ## 2.2 Inventory
 
@@ -372,7 +374,8 @@ Each supported harness binds the slots below before the routine path can run aga
 
 ## 4.2 OpenCode (shape: git-fork)
 
-- **Repos**: harness fork at `opencode/` (submodule; remotes: `origin` = Vibecodelicious fork, `upstream` = canonical repo). Plugin side repo `opencode_context_bonsai_plugin/` — not modified during a cycle.
+- **Repos**: harness fork at `opencode/` (submodule; remotes: `origin` = Vibecodelicious fork, `upstream` = canonical repo — the upstream remote for §2.1's tag fetch; its refspec is heads-only). Plugin side repo `opencode_context_bonsai_plugin/` — not modified during a cycle.
+- **Pre-existing dirty status paths** (§1.10 enumeration): in the parent repo, the `tweakcc_context_bonsai` submodule pin (` M tweakcc_context_bonsai` in `git status --short`) — dirty before any cycle, untouchable.
 - **Upstream identity**: upstream release tags (`refs/tags/v<version>`), frozen per §2.1.
 - **Allowlists**: runtime `packages/opencode/**`, `packages/plugin/**`; docs `.agents/plans/**`, `.opencode/context_bonsai/**`; state-only: metadata/state artifacts outside both.
 - **Fork-owned wholesale files**: root `README.md` (signpost; classified `manual_review` per §2.3, wholesale-replaced on conflict per §2.5; content probe: `grep -q "Context Bonsai" README.md`).

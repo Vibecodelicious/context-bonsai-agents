@@ -15,6 +15,7 @@ The spec is authoritative for every cycle step. This brief supplies only what th
 - `SOURCE_HEAD_SHA`: `0dfbeeda7d8a273c52a564333c8179c68d6ab04d`
 - `UPSTREAM_REF`: `refs/tags/v1.17.13`
 - Harness slot: OpenCode (§4.2); shape: git-fork (Part 2)
+- §1.10 pre-existing dirty status paths, parent repo: the `tweakcc_context_bonsai` submodule pin (` M tweakcc_context_bonsai` in `git status --short`). Its dirty state predates the cycle; the §1.10 clean-state check passes with it present, and it must never be staged, committed, or reverted.
 - The opt-in validation mode of §1.11 is not requested for this cycle.
 
 ## Orchestration wiring (ORCHESTRATOR_AGENT.md placeholder values)
@@ -32,10 +33,10 @@ Launch subagents with the task tool, using the agents defined in `opencode.json`
 ## Non-negotiable orchestration rules
 
 - Execute the spec's five-step sequence ("How a routine cycle uses this spec") in order. The §1.15 validation loop and step 5 (§1.16 routine maintenance) are mandatory, not optional.
-- If a spec STOP or hard-fail fires: stop that path. Append a STOP report to the friction log — which STOP, its spec section, the exact evidence, and which assumption of the OpenCode slot (§4.2) or the git-fork shape (Part 2) it calls into question. Never weaken a threshold, ambiguity rule, or gate to keep moving. Do not attempt the spec's §1.17 escalation derivation yourself; it belongs to a different tier. Write the final report (below) and end the run.
+- If a spec STOP or hard-fail fires: stop that path. Append a STOP report to the friction log — which STOP, its spec section, the exact evidence, and which assumption of the OpenCode slot (§4.2) or the git-fork shape (Part 2) it calls into question. Never weaken a threshold, ambiguity rule, or gate to keep moving. Do not attempt the spec's §1.17 escalation derivation yourself; it belongs to a different tier. Then attempt §1.16 maintenance — mandatory on a STOP as well as on a seal — write the final report (below), and end the run.
 - Friction log: `.agents/pilot/gpt55-v1.17.13-friction-log.md`. Append an entry whenever any of these happens: a subagent fails or is relaunched, a spec instruction is ambiguous or missing for the situation at hand, a command fails unexpectedly, a gate fails, or you or a subagent act beyond the spec's text. Record facts only — UTC timestamp, cycle phase and spec section, what happened, what was done next. Do not classify or excuse entries; classification happens outside this run.
-- Do not modify `docs/agent-specs/forward-port-spec.md` while the cycle is running (seal gate 12). §1.16 maintenance edits happen only after the seal, and touch Part 4 only.
-- Do not touch: pre-existing directories under `opencode/.agent_tmp/` from prior cycles; the `tweakcc_context_bonsai` submodule pin (its dirty state is pre-existing and out of scope); this brief; `opencode.json`.
+- Do not modify `docs/agent-specs/forward-port-spec.md` while the cycle is running (seal gate 12). §1.16 maintenance runs after the cycle ends — seal or STOP alike — and its edits touch Part 4 only.
+- Do not touch: pre-existing directories under `opencode/.agent_tmp/` from prior cycles; the `tweakcc_context_bonsai` submodule pin (enumerated as pre-existing dirty under Cycle inputs above); this brief; `opencode.json`.
 - Commit messages must have a body, never a subject line alone.
 
 ## Final report
