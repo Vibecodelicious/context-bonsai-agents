@@ -20,6 +20,8 @@ The meta-loop is the machinery that generates and regenerates level 2. It must h
 
 "Self-updating" means the routine path runs with no human decision-making, and the other two paths run agentically with human review at the existing reviewer+judge gates. Detection of which path applies is itself automatic — a path-selection dispatcher, which does not exist yet: the routine path fails closed with a structural reason code rather than grinding forward or silently succeeding.
 
+**Executor tiering.** The determinism machinery (frozen inputs, fixed precedence, machine-checkable gates) is calibrated scaffolding, not architecture: each such rule moves a judgment call out of the executor and into the artifact, and that is precisely what lets weaker or cheaper models run the loops. The target assignment, approved by the project owner 2026-07-01: the routine path *and* its own maintenance (absorbing cycle friction back into the routine's instructions) run on a process orchestrator (`.llm-conductor/ORCHESTRATOR_AGENT.md` pattern) in the OpenCode harness on GPT-5.5 at low or medium thinking. If routine-maintenance proves beyond that executor, fall back one rung: GPT-5.5 keeps routine execution, a stronger (Fable-class) model maintains the routine. The loop above that — developing this loop system, governed by this document's Iteration Rule — runs on a stronger model with the project owner. Relaxing the determinism machinery may be explored only in tiers executed by the stronger model; in GPT-5.5-executed tiers it is load-bearing for the delegation.
+
 ## Current State (evidence)
 
 Short SHAs below are the `SOURCE_HEAD_SHA` keys of `.agents/plans/story-rebase-cycle-<sha>.md` cycle plans.
@@ -45,6 +47,8 @@ Output contract: a single spec at `docs/agent-specs/forward-port-spec.md` (makin
 
 Acceptance test: regenerating the two most recent real cycle plans — one OpenCode (`4d88b95`), one Claude Code (`95c2422`) — from the restructured spec plus their bindings yields plans equivalent to the ones that actually ran, where equivalent means: same seal/blocking gates, same bucket taxonomy and precedence, same validation command set and working directories, same immutable e2e scope. Prose, ordering, and formatting may differ.
 
+Second acceptance criterion, from the executor-tiering goal: the restructured spec must be executable by the target executor — GPT-5.5 at low/medium thinking under the orchestrator pattern. Write for that reader: no step may require a judgment call the spec does not resolve. This criterion outranks elegance; where the two conflict, keep the determinism.
+
 ## Provisional Future Steps
 
 Ordered by current best guess; any or all may be replaced when the next iteration of this direction loop runs with the restructured spec in hand.
@@ -52,7 +56,7 @@ Ordered by current best guess; any or all may be replaced when the next iteratio
 1. **Formalize escalation.** Enumerate the structural-break reason codes the routine path can emit, and specify what each invalidates (harness binding, shape binding, or per-harness spec content). Today these exist as scattered fail-closed behaviors; they need to become the input to the path-selection dispatcher described in the End Goal.
 2. **Specify the derivation pipeline** (the structural-break / new-harness path): capability discovery against the behavior contract, integration-posture selection, per-harness spec generation, e2e slot binding, and emission of the harness's level-2 bindings. Mine `.agents/plans/epic-context-bonsai-agent-ports/` and the per-harness specs' shared section structure (Capability Evidence Matrix, Verified Host Primitives, Integration Posture) for the stage contracts.
 3. **Split per-harness specs into contract vs. bindings.** The stable behavioral content and the regenerable structural facts currently share one document (e.g. `docs/agent-specs/claude-code-context-bonsai-spec.md` mixes both). The derivation pipeline needs to know what it may rewrite.
-4. **Prove the loop on a live event**: run the next real harness release (or the next Claude Code version bump) through the restructured spec end to end, and absorb the friction as the first post-restructure regression check.
+4. **Run the GPT-5.5 pilot** on the next real OpenCode release: a process orchestrator in OpenCode on GPT-5.5 (low/medium thinking) executes a full routine cycle from the restructured spec, then performs the maintenance step — absorbing that cycle's friction back into the routine's instructions — without a stronger model intervening. Record every stumble with a failure-attribution verdict: `SPEC-GAP` (the spec left a judgment call unresolved — fix the artifact, not the tiering) vs `EXECUTOR-FAIL` (the spec was deterministic and the executor still failed — evidence for the fallback rung). The tiering decision is made from these verdicts, not from impressions; do not abandon the GPT-5.5 target over failures that were spec defects.
 5. **Reduce human steps in the routine path** — automated release detection per harness, automatic cycle-plan generation on detection — only after the restructured spec has survived at least one live cycle.
 
 ## Iteration Rule For This Document
