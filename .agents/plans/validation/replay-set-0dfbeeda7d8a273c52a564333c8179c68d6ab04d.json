@@ -1,0 +1,70 @@
+[
+  {
+    "source_sha": "5451227deb5a502afe44e1664e81df7ecb208ed1",
+    "bucket": "already_in_upstream",
+    "replay_action": "drop",
+    "mapping_type": "drop",
+    "target_paths": [
+      "bun.lock",
+      "packages/app/package.json",
+      "packages/console/app/package.json",
+      "packages/console/core/package.json",
+      "packages/console/function/package.json",
+      "packages/console/mail/package.json",
+      "packages/core/package.json",
+      "packages/desktop/package.json",
+      "packages/effect-drizzle-sqlite/package.json",
+      "packages/enterprise/package.json",
+      "packages/extensions/zed/extension.toml",
+      "packages/function/package.json",
+      "packages/http-recorder/package.json",
+      "packages/llm/package.json",
+      "packages/opencode/package.json",
+      "packages/plugin/package.json",
+      "packages/sdk/js/package.json",
+      "packages/slack/package.json",
+      "packages/ui/package.json",
+      "packages/web/package.json",
+      "sdks/vscode/package.json"
+    ],
+    "rationale": "Release metadata commit from the old source base is patch-equivalent in frozen upstream v1.17.13 and must not be replayed.",
+    "evidence_ref": "git cherry -v 10c894bdeef3618f5666fb506ef7f9491bb964d8 0dfbeeda7d8a273c52a564333c8179c68d6ab04d marks 5451227d with '-'"
+  },
+  {
+    "source_sha": "712175fd95d2923c91e082c1c02708d648832cdd",
+    "bucket": "required_runtime",
+    "replay_action": "cherry-pick",
+    "mapping_type": "1:1",
+    "target_paths": [
+      "packages/opencode/src/session/message-v2.ts",
+      "packages/opencode/test/session/context-bonsai.test.ts",
+      "packages/opencode/test/session/message-v2.test.ts"
+    ],
+    "rationale": "Required Context Bonsai runtime patch inside the OpenCode runtime allowlist; it persists message metadata needed by prune/retrieve state.",
+    "evidence_ref": "git cherry -v marks 712175fd with '+' and git log --name-status shows only packages/opencode paths"
+  },
+  {
+    "source_sha": "bedf144c066448d8668179ffd1a2cdb2a31b6207",
+    "bucket": "required_runtime",
+    "replay_action": "cherry-pick",
+    "mapping_type": "1:1",
+    "target_paths": [
+      "packages/opencode/src/tool/registry.ts",
+      "packages/opencode/test/tool/registry.test.ts",
+      "packages/plugin/src/tool.ts"
+    ],
+    "rationale": "Required Context Bonsai runtime/plugin bridge patch inside the OpenCode runtime allowlists; it exposes safe metadata updates to plugin tools.",
+    "evidence_ref": "git cherry -v marks bedf144c with '+' and git log --name-status shows only packages/opencode and packages/plugin paths"
+  },
+  {
+    "source_sha": "0dfbeeda7d8a273c52a564333c8179c68d6ab04d",
+    "bucket": "manual_review",
+    "replay_action": "cherry-pick",
+    "mapping_type": "1:1",
+    "target_paths": [
+      "README.md"
+    ],
+    "rationale": "Root README is a fork-owned signpost outside the runtime/docs allowlists; the git-fork binding requires per-cycle manual-review approval instead of widening allowlists.",
+    "evidence_ref": "git log --name-status shows README.md only; approval recorded in manual-review-approvals-0dfbeeda7d8a273c52a564333c8179c68d6ab04d.json"
+  }
+]

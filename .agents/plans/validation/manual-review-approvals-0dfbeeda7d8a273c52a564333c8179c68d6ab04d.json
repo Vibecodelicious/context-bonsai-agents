@@ -1,0 +1,12 @@
+[
+  {
+    "source_sha": "0dfbeeda7d8a273c52a564333c8179c68d6ab04d",
+    "approved_action": "cherry-pick README.md signpost; on conflict replace README.md wholesale from the source commit and verify it contains Context Bonsai",
+    "approval_refs": [
+      "bonsai-reviewer-missing-details <reviewer-md@context-bonsai.local> — iteration-1 missing-details report, 2026-07-03, zero blocking findings (recorded in the plan's Validation Loop Results)",
+      "bonsai-reviewer-ambiguity <reviewer-amb@context-bonsai.local> — iteration-1 ambiguity report, 2026-07-03, zero blocking findings (recorded in the plan's Validation Loop Results)",
+      "bonsai-judge <judge@context-bonsai.local> — plan-approval gate verdict APPROVE incl. this row, 2026-07-03, quoted in the plan's Plan Approval and Commit Status section; resolution matches forward-port-spec §2.3/§2.5/§4.2"
+    ],
+    "resolution_state": "approved"
+  }
+]
