@@ -18,6 +18,13 @@
 set -u
 cd "$(dirname "$0")/../.."
 LOG=.agents/pilot/gpt55-v1.17.13-run.log
+# Seed the append-only intent log (brief §"Run continuity"): RUN-START marks
+# the authorship boundary — cycle artifacts postdating it are this run's work.
+INTENT=.agents/pilot/gpt55-v1.17.13-intent-log.md
+{
+  echo "# Intent Log — gpt55-v1.17.13 pilot run (append-only; see brief §Run continuity)"
+  echo "RUN-START $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+} > "$INTENT"
 {
   if [ "${PILOT_DRYRUN:-0}" = "1" ]; then
     echo "dry-run: orchestrator not launched"
