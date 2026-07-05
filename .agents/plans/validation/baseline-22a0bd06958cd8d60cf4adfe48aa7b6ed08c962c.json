@@ -1,0 +1,72 @@
+[
+  {
+    "row_id": "01",
+    "command": "bun install",
+    "frozen_target_package": "@anthropic-ai/claude-code@2.1.201",
+    "frozen_source_head_sha": "22a0bd06958cd8d60cf4adfe48aa7b6ed08c962c",
+    "exit_code": 0,
+    "result": "pass",
+    "artifact_path": "/tmp/cc-bonsai-e2e/baseline/01-bun-install.log",
+    "provenance_ref": "git rev-parse HEAD=6321e342f6b432aa02452aae9cefcc48e24af320"
+  },
+  {
+    "row_id": "02",
+    "command": "bun test",
+    "frozen_target_package": "@anthropic-ai/claude-code@2.1.201",
+    "frozen_source_head_sha": "22a0bd06958cd8d60cf4adfe48aa7b6ed08c962c",
+    "exit_code": 0,
+    "result": "pass",
+    "artifact_path": "/tmp/cc-bonsai-e2e/baseline/02-bun-test.log",
+    "provenance_ref": "git rev-parse HEAD=6321e342f6b432aa02452aae9cefcc48e24af320"
+  },
+  {
+    "row_id": "03",
+    "command": "bun run typecheck",
+    "frozen_target_package": "@anthropic-ai/claude-code@2.1.201",
+    "frozen_source_head_sha": "22a0bd06958cd8d60cf4adfe48aa7b6ed08c962c",
+    "exit_code": 0,
+    "result": "pass",
+    "artifact_path": "/tmp/cc-bonsai-e2e/baseline/03-typecheck.log",
+    "provenance_ref": "jq -r .scripts.typecheck package.json='bun x tsc --noEmit && cd mcp-server && bun x tsc --noEmit'"
+  },
+  {
+    "row_id": "04",
+    "command": "bun run e2e/native-e2e.ts artifact-evidence --bundle /tmp/cc-bonsai-artifacts/claude-code/2.1.201/native/extracted.js --manifest /tmp/cc-bonsai-artifacts/claude-code/2.1.201/native/manifest.json --out /tmp/cc-bonsai-e2e/2.1.201-artifact-evidence.json",
+    "frozen_target_package": "@anthropic-ai/claude-code@2.1.201",
+    "frozen_source_head_sha": "22a0bd06958cd8d60cf4adfe48aa7b6ed08c962c",
+    "exit_code": 0,
+    "result": "pass",
+    "artifact_path": "/tmp/cc-bonsai-e2e/baseline/04-artifact-evidence.log",
+    "provenance_ref": "sha256sum extracted.js=9f9519b0c93914bd2fda5e6cdc7a74df2b7121909f783fb3b1cc9c86771708ef"
+  },
+  {
+    "row_id": "05",
+    "command": "bun test (post-replay)",
+    "frozen_target_package": "@anthropic-ai/claude-code@2.1.201",
+    "frozen_source_head_sha": "22a0bd06958cd8d60cf4adfe48aa7b6ed08c962c",
+    "exit_code": 0,
+    "result": "pass",
+    "artifact_path": "/tmp/cc-bonsai-e2e/baseline/05-bun-test.log",
+    "provenance_ref": "165 tests, 0 fail; E2E-05 Constraint-10 tests (mcp-server/index.test.ts lines 400,426) pass"
+  },
+  {
+    "row_id": "06",
+    "command": "bun run typecheck (post-replay)",
+    "frozen_target_package": "@anthropic-ai/claude-code@2.1.201",
+    "frozen_source_head_sha": "22a0bd06958cd8d60cf4adfe48aa7b6ed08c962c",
+    "exit_code": 0,
+    "result": "pass",
+    "artifact_path": "/tmp/cc-bonsai-e2e/baseline/06-typecheck.log",
+    "provenance_ref": "jq -r .scripts.typecheck package.json='bun x tsc --noEmit && cd mcp-server && bun x tsc --noEmit'"
+  },
+  {
+    "row_id": "07",
+    "command": "bun run e2e/native-e2e.ts artifact-evidence --bundle /tmp/cc-bonsai-artifacts/claude-code/2.1.201/native/extracted.js --manifest /tmp/cc-bonsai-artifacts/claude-code/2.1.201/native/manifest.json --out /tmp/cc-bonsai-e2e/2.1.201-artifact-evidence.json (post-replay, validates docs/semantic-anchor-analysis-2.1.201.md)",
+    "frozen_target_package": "@anthropic-ai/claude-code@2.1.201",
+    "frozen_source_head_sha": "22a0bd06958cd8d60cf4adfe48aa7b6ed08c962c",
+    "exit_code": 0,
+    "result": "pass",
+    "artifact_path": "/tmp/cc-bonsai-e2e/baseline/07-artifact-evidence.log",
+    "provenance_ref": "sha256sum extracted.js=9f9519b0c93914bd2fda5e6cdc7a74df2b7121909f783fb3b1cc9c86771708ef; rebound semanticReportPath validated"
+  }
+]
