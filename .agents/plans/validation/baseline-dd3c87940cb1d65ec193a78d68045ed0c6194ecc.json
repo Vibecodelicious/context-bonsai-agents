@@ -1,0 +1,82 @@
+[
+  {
+    "row_id": "b01",
+    "command": "npm install",
+    "frozen_target_package": "@mariozechner/pi-coding-agent@0.73.1",
+    "frozen_source_head_sha": "dd3c87940cb1d65ec193a78d68045ed0c6194ecc",
+    "exit_code": 0,
+    "result": "pass",
+    "artifact_path": "/tmp/pi-bonsai-e2e/real-run-logs/b01-install.log",
+    "provenance_ref": "git -C pi_context_bonsai rev-parse HEAD = dd3c87940cb1d65ec193a78d68045ed0c6194ecc; pre-bump pins 0.69.0"
+  },
+  {
+    "row_id": "b02",
+    "command": "npm test",
+    "frozen_target_package": "@mariozechner/pi-coding-agent@0.73.1",
+    "frozen_source_head_sha": "dd3c87940cb1d65ec193a78d68045ed0c6194ecc",
+    "exit_code": 0,
+    "result": "pass-green",
+    "artifact_path": "/tmp/pi-bonsai-e2e/real-run-logs/b02-test.log",
+    "provenance_ref": "must-be-green baseline; 16 test files, 97 tests passed, 0 failed; pre-bump pins 0.69.0"
+  },
+  {
+    "row_id": "b03",
+    "command": "npm run typecheck",
+    "frozen_target_package": "@mariozechner/pi-coding-agent@0.73.1",
+    "frozen_source_head_sha": "dd3c87940cb1d65ec193a78d68045ed0c6194ecc",
+    "exit_code": 0,
+    "result": "pass-green",
+    "artifact_path": "/tmp/pi-bonsai-e2e/real-run-logs/b03-typecheck.log",
+    "provenance_ref": "must-be-green baseline; package.json .scripts.typecheck = tsc --noEmit; clean, pre-bump pins 0.69.0"
+  },
+  {
+    "row_id": "b04",
+    "command": "test ! -f docs/binding-verification-0.73.1.md && echo missing-as-expected",
+    "frozen_target_package": "@mariozechner/pi-coding-agent@0.73.1",
+    "frozen_source_head_sha": "dd3c87940cb1d65ec193a78d68045ed0c6194ecc",
+    "exit_code": 0,
+    "result": "missing-as-expected",
+    "artifact_path": "/tmp/pi-bonsai-e2e/real-run-logs/b01-install.log",
+    "provenance_ref": "cycle-not-yet-run guard (Phase 3 b04); docs/binding-verification-0.73.1.md absent as expected"
+  },
+  {
+    "row_id": "p02",
+    "command": "npm test",
+    "frozen_target_package": "@mariozechner/pi-coding-agent@0.73.1",
+    "frozen_source_head_sha": "dd3c87940cb1d65ec193a78d68045ed0c6194ecc",
+    "exit_code": 0,
+    "result": "pass-green-post-replay",
+    "artifact_path": "/tmp/pi-bonsai-e2e/real-run-logs/p02-test.log",
+    "provenance_ref": "post-replay at bumped pins 0.73.1; 16 test files, 97 tests passed, 0 failed; no worse than b02 baseline"
+  },
+  {
+    "row_id": "p03",
+    "command": "npm run typecheck",
+    "frozen_target_package": "@mariozechner/pi-coding-agent@0.73.1",
+    "frozen_source_head_sha": "dd3c87940cb1d65ec193a78d68045ed0c6194ecc",
+    "exit_code": 0,
+    "result": "pass-green-post-replay",
+    "artifact_path": "/tmp/pi-bonsai-e2e/real-run-logs/p03-typecheck.log",
+    "provenance_ref": "post-replay tsc --noEmit green at bumped pins 0.73.1; no worse than b03 baseline"
+  },
+  {
+    "row_id": "e07",
+    "command": "timeout 900 bash test/e2e/run-e2e.sh",
+    "frozen_target_package": "@mariozechner/pi-coding-agent@0.73.1",
+    "frozen_source_head_sha": "dd3c87940cb1d65ec193a78d68045ed0c6194ecc",
+    "exit_code": 0,
+    "result": "pass-protocol-a",
+    "artifact_path": "/tmp/pi-bonsai-e2e/real-run-logs/e2e-07.log",
+    "provenance_ref": "E2E-07 automated; install log names @mariozechner/pi-coding-agent@0.73.1 (runtime binding re-assert); prune isError:false Archived 1 messages, turn-4 recall UNAVAILABLE; provider openai-codex / gpt-5.3-codex-spark"
+  },
+  {
+    "row_id": "e0103",
+    "command": "docs/pi-e2e-runbook.md Parts 2-3 manual drives P1-P6",
+    "frozen_target_package": "@mariozechner/pi-coding-agent@0.73.1",
+    "frozen_source_head_sha": "dd3c87940cb1d65ec193a78d68045ed0c6194ecc",
+    "exit_code": 0,
+    "result": "pass-e2e-01-placeholder-and-e2e-03-retrieve",
+    "artifact_path": "/tmp/pi-bonsai-e2e/0.73.1/e2e-01-03/",
+    "provenance_ref": "P3 one anchor 26d8aa65; P4 --no-tools reproduced [PRUNED] placeholder (facts absent); P5 tombstone archive-clear 26d8aa65; P6 --no-tools recounted restored facts; provider openai-codex / gpt-5.3-codex-spark"
+  }
+]
