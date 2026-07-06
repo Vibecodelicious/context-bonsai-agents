@@ -18,7 +18,7 @@
 // Slot micro-format (backtick-wrapped, space-separated directives):
 //   ported-version evidence `git-tag <repo> <tag-prefix>`
 //                           `doc-file <dir> <file-prefix>`   (<prefix><version>.md)
-//   upstream query          `git-remote-tag <repo> <remote> <tag-prefix>`
+//   upstream query          `git-remote-tag <repo> <remote> <tag-prefix> [<tag-suffix>]`
 //                           `npm <package>`
 // Paths are relative to the repo root (this script's parent directory).
 //
@@ -86,7 +86,7 @@ function maxVersion(strings) {
 }
 
 // Extract bound harness sections from Part 4. A bound section is a `## 4.x`
-// heading carrying a `(shape: ...)` marker; schema (§4.1) and unbound (§4.6)
+// heading carrying a `(shape: ...)` marker; schema (§4.1) and unbound (§4.7)
 // sections carry none and are skipped by construction.
 function loadBoundHarnesses() {
   let specText;
@@ -129,7 +129,7 @@ function parseHarnessSlot({ name, body }) {
     'doc-file': 2,
   });
   const upstreamDirective = parseDirective(name, 'upstream query', upstream[1], {
-    'git-remote-tag': 3,
+    'git-remote-tag': [3, 4],
     npm: 1,
   });
   // Integrity cross-check: an npm query must target the exact package the
@@ -156,9 +156,10 @@ function parseDirective(harness, field, raw, kinds) {
     failClosed(
       `unknown ${field} kind "${kind}" for "${harness}" (known: ${Object.keys(kinds).join(', ')})`
     );
-  if (args.length !== kinds[kind])
+  const allowed = Array.isArray(kinds[kind]) ? kinds[kind] : [kinds[kind]];
+  if (!allowed.includes(args.length))
     failClosed(
-      `${field} \`${raw}\` for "${harness}" needs ${kinds[kind]} argument(s), got ${args.length}`
+      `${field} \`${raw}\` for "${harness}" needs ${allowed.join(' or ')} argument(s), got ${args.length}`
     );
   return { kind, args, raw };
 }
@@ -224,11 +225,14 @@ function resolveUpstream(harness, { kind, args }) {
       failClosed(`npm view for "${harness}" returned a non-stable version "${raw}"`);
     return { raw, parsed };
   }
-  // git-remote-tag
-  const [repo, remote, prefix] = args;
+  // git-remote-tag; the optional 4th argument is a literal tag suffix for
+  // release families named `<prefix><version><suffix>` (e.g. Cline's
+  // `v2.17.0-cli`) — tags without the suffix belong to other families and
+  // drop out before version parsing.
+  const [repo, remote, prefix, suffix = ''] = args;
   let out;
   try {
-    out = git(repo, ['ls-remote', '--tags', remote, `refs/tags/${prefix}*`]);
+    out = git(repo, ['ls-remote', '--tags', remote, `refs/tags/${prefix}*${suffix}`]);
   } catch (e) {
     failClosed(`ls-remote failed for "${harness}" (${repo} ${remote}): ${e.message}`);
   }
@@ -237,10 +241,14 @@ function resolveUpstream(harness, { kind, args }) {
     .map((l) => l.match(/\trefs\/tags\/(.+?)(\^\{\})?$/))
     .filter(Boolean)
     .filter((m) => !m[2]) // skip dereferenced ^{} duplicates
-    .map((m) => m[1].slice(prefix.length));
+    .map((m) => m[1])
+    .filter((t) => suffix === '' || t.endsWith(suffix))
+    .map((t) => t.slice(prefix.length, t.length - suffix.length));
   const best = maxVersion(versions); // prerelease suffixes parse to null and drop out
   if (!best)
-    failClosed(`no stable upstream tags matching ${prefix}* on ${remote} for "${harness}"`);
+    failClosed(
+      `no stable upstream tags matching ${prefix}*${suffix} on ${remote} for "${harness}"`
+    );
   return best;
 }
 

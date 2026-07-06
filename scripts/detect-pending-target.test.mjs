@@ -101,7 +101,15 @@ before(() => {
   // upstream repo with stable and prerelease tags
   const upstream = join(root, 'upstream-remote');
   gitInit(upstream);
-  for (const t of ['v1.2.3', 'v1.3.0', 'v1.4.0-beta.1', 'vnext'])
+  for (const t of [
+    'v1.2.3',
+    'v1.3.0',
+    'v1.4.0-beta.1',
+    'vnext',
+    // a suffixed release family alongside the plain one (the Cline shape)
+    'v0.9.0-cli',
+    'v1.1.0-cli',
+  ])
     sh(upstream, 'git', ['tag', t]);
 
   // fork checkout: remote `upstream` -> the repo above; local port tags
@@ -109,6 +117,7 @@ before(() => {
   gitInit(fork);
   sh(fork, 'git', ['remote', 'add', 'upstream', upstream]);
   sh(fork, 'git', ['tag', 'bonsai/on-fork-1.2.3']);
+  sh(fork, 'git', ['tag', 'bonsai/on-cli-0.9.0']);
 
   // side-repo docs dir with per-cycle analysis files
   const docs = join(root, 'sidedocs');
@@ -139,6 +148,34 @@ test('pending target detected: newer stable upstream tag, prereleases ignored', 
     ported: '1.2.3',
     upstream: '1.3.0', // not 1.4.0-beta.1, not vnext
   });
+});
+
+test('tag-suffix directive: only the suffixed family is compared', () => {
+  // Without the suffix filter, the plain family's v1.3.0 would dominate the
+  // suffixed family's 1.1.0 and misreport the pending target.
+  const spec = writeSpec({
+    releaseLineGit:
+      '- **Release detection**: ported-version evidence `git-tag fork bonsai/on-cli-`; upstream query `git-remote-tag fork upstream v -cli`.',
+  });
+  const r = run(['--harness', 'ForkHarness', '--json'], { spec });
+  assert.equal(r.status, 3, r.stderr);
+  const [d] = JSON.parse(r.stdout);
+  assert.deepEqual(d, {
+    harness: 'ForkHarness',
+    status: 'pending-target',
+    ported: '0.9.0',
+    upstream: '1.1.0', // not 1.3.0 from the unsuffixed family
+  });
+});
+
+test('git-remote-tag arity outside 3..4 fails closed', () => {
+  const spec = writeSpec({
+    releaseLineGit:
+      '- **Release detection**: ported-version evidence `git-tag fork bonsai/on-fork-`; upstream query `git-remote-tag fork upstream v -cli extra`.',
+  });
+  const r = run(['--harness', 'ForkHarness'], { spec });
+  assert.equal(r.status, 2);
+  assert.match(r.stderr, /needs 3 or 4 argument\(s\)/);
 });
 
 test('up to date: npm version equals highest analysis doc, exit 0', () => {
@@ -234,7 +271,10 @@ test('--plan resolves all live-spec bindings without running any query', () => {
   assert.equal(r.status, 0, r.stderr);
   const plan = JSON.parse(r.stdout);
   const names = plan.map((p) => p.harness).sort();
-  assert.deepEqual(names, ['Claude Code', 'Codex', 'OpenCode', 'Pi']);
+  assert.deepEqual(names, ['Claude Code', 'Cline', 'Codex', 'OpenCode', 'Pi']);
+  const cl = plan.find((p) => p.harness === 'Cline');
+  assert.match(cl.upstream, /^git-remote-tag cline upstream v -cli$/);
+  assert.match(cl.ported, /^git-tag cline bonsai\/v1-on-cline-$/);
   const cc = plan.find((p) => p.harness === 'Claude Code');
   assert.match(cc.upstream, /^npm @anthropic-ai\/claude-code$/);
   assert.match(cc.ported, /^doc-file tweakcc_context_bonsai\/docs semantic-anchor-analysis-$/);
