@@ -82,7 +82,7 @@ EXECUTED 2026-07-06 (task `1783312463937`): seed the same marker in two user mes
 
 ### E2E-03 — retrieve by anchor
 
-EXECUTED 2026-07-06: follow-up `-T` turn instructing `context-bonsai-retrieve` with the exact anchor id from the prune result (never make the model guess it). PASS: the model quotes the restored content; host state shows the span back in `api_conversation_history.json`, the record gone from `context_bonsai_archives.json` (empty `archives` map), zero placeholder text remaining.
+EXECUTED 2026-07-06: follow-up `-T` turn instructing `context-bonsai-retrieve` with the exact anchor id from the prune result (never make the model guess it). PASS: the model quotes the restored content; host state shows the span back in `api_conversation_history.json`, the record gone from `context_bonsai_archives.json` (empty `archives` map), zero placeholder text remaining. EXECUTED trap (install-gate smoke, same date): if the prune landed on the *first* API request of its process, a retrieve issued as the first request of any resumed process is falsely rejected `retrieve_same_step` — the guard's step counter is the per-process `apiRequestCount` (the E2E-04 counter). Instruct one in-process retry after a `retrieve_same_step` error; the second attempt passes. Defect candidate recorded in `cline_context_bonsai/docs/install-e2e-results-2026-07-06.md`.
 
 ### E2E-06 — persistence across resume (CLI half)
 
@@ -96,11 +96,11 @@ E2E-05 stays non-live per its recorded justification (procedure doc); fail-close
 
 ## Part 2: Installation E2E
 
-**No fresh-machine run has been executed for this port** (procedure doc, Phase 1 status): the 2026-07-06 run built from the existing maintainer checkout. The install-command tail (`npm run cli:build`, `node cli/dist/cli.mjs version`) is EXECUTED; the fresh-machine sequence as a whole is COMPOSED.
+**EXECUTED** (2026-07-06 fresh-machine run, `cline_context_bonsai/docs/install-e2e-results-2026-07-06.md`): the full sequence below ran verbatim, bundle-sourced, in a clean `node:22` podman container against fork tag `bonsai/v1-on-cline-2.17.0` — all installation phases PASS.
 
 ### Fresh machine and install commands
 
-Fresh-machine model is a sprite, provisioned from scratch and destroyed at teardown (`sprite create <run-name>` / `sprite destroy <run-name>`; no checkpoint). Install per the side repo's README (COMPOSED shape; Node.js + npm are the only prerequisites the fork declares):
+Fresh-machine model is provision-from-scratch, destroyed at teardown: a sprite for post-publish runs (`sprite create <run-name>` / `sprite destroy <run-name>`; no checkpoint), or a clean local container from a pinned Node image for pre-publish runs, where repo content must not leave the machine (EXECUTED variant). Install per the side repo's README (Node.js + npm are the only prerequisites the fork declares):
 
 ```bash
 git clone https://github.com/Vibecodelicious/context-bonsai-agents.git
@@ -114,7 +114,7 @@ node cli/dist/cli.mjs version
 grep -c "context-bonsai-prune" cli/dist/cli.mjs
 ```
 
-Pre-publish runs source the parent and both submodules from local `git bundle` files via scoped `url.insteadOf` + `protocol.file.allow` (procedure doc, pre-publish sourcing; bundle URL tails `context-bonsai-agents.git`, `cline.git`, `cline_context_bonsai.git`). Push nothing. **Run the bundles and the clone on real disk, not `/tmp`** (EXECUTED trap, 2026-07-06: the `cline` bundle is ~424MB and the full clone plus `node_modules` overflows the shared ~6GB `/tmp` tmpfs, breaking the shell mid-gate; a real-disk scratch dir, removed at gate end per forward-port-spec §1.19, resolved it to PASS).
+Pre-publish runs source the parent and both submodules from local `git bundle` files via scoped `url.insteadOf` + `protocol.file.allow` (procedure doc, pre-publish sourcing; bundle URL tails `context-bonsai-agents.git`, `cline.git`, `cline_context_bonsai.git`). Push nothing. **Run the bundles and the clone on real disk, not `/tmp`** (EXECUTED trap, 2026-07-06: a full-ref `cline` bundle is ~424MB and the full clone plus `node_modules` overflows the shared ~6GB `/tmp` tmpfs, breaking the shell mid-gate; a real-disk scratch dir, removed at gate end per forward-port-spec §1.19, resolved it to PASS). Bundle only the gitlink commits and their refs — the fresh-machine run's single-ref `cline` bundle was 77MB and satisfied `git submodule update --init` (EXECUTED).
 
 ### Phase 3 — tool registration, and Phase 4 — smoke
 
