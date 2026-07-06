@@ -98,7 +98,30 @@ cargo build --bin codex
 strings target/debug/codex | grep -E 'context-bonsai-(prune|retrieve)'
 ```
 
-Build prerequisites recorded by the 2026-05-20 run: `build-essential pkg-config libcap-dev libseccomp-dev` plus rustup (the fork pins `channel = "1.93.0"` in `codex-rs/rust-toolchain.toml`). Pre-publish runs source the parent and both submodules from local `git bundle` files via scoped `url.insteadOf` + `protocol.file.allow` (procedure doc, pre-publish sourcing; bundle URL tails `context-bonsai-agents.git`, `codex.git`, `codex_context_bonsai.git`).
+Build prerequisites recorded by the 2026-05-20 run: `build-essential pkg-config libcap-dev libseccomp-dev` plus rustup (the fork pins `channel = "1.93.0"` in `codex-rs/rust-toolchain.toml`).
+
+### Pre-publish local sourcing — concrete commands (owner-tier binding, 2026-07-06)
+
+Pre-publish runs must source the parent and both submodules from local state, never the network (procedure doc, pre-publish sourcing). The generic mechanism is `git bundle` files via scoped `url.insteadOf`; **for Codex the fork submodule is a shallow clone, and a bundle created from a shallow repo is unclonable** (verified 2026-07-06: `git clone` from such a bundle fails `remote did not send all necessary objects`), so the Codex realization sources via `file://` URLs directly from the on-disk repos — the same local-sourcing guarantee. Run the gate **on real disk, never `/tmp`** (the ~6GB tmpfs quota; a codex clone plus cargo target tree far exceeds it). COMPOSED block (first runs at the first routine cycle's gate; a failure here is a finding against this runbook, not license to improvise):
+
+```bash
+GATE="$HOME/scratch/codex-bonsai-install-gate"   # real disk
+mkdir -p "$GATE" && cd "$GATE"
+for R in /home/basil/projects/context-bonsai-agents{,/codex,/codex_context_bonsai}; do
+  git -C "$R" config uploadpack.allowReachableSHA1InWant true
+done
+git -c protocol.file.allow=always clone --branch <parent-pin-advance-branch> \
+  file:///home/basil/projects/context-bonsai-agents context-bonsai-agents
+cd context-bonsai-agents
+git config protocol.file.allow always
+git config url."file:///home/basil/projects/context-bonsai-agents/codex".insteadOf https://github.com/Vibecodelicious/codex.git
+git config url."file:///home/basil/projects/context-bonsai-agents/codex_context_bonsai".insteadOf https://github.com/Vibecodelicious/codex_context_bonsai.git
+git submodule update --init --depth 1 codex codex_context_bonsai
+cd codex/codex-rs && cargo build --bin codex
+strings target/debug/codex | grep -E 'context-bonsai-(prune|retrieve)'
+```
+
+Then Phase 3/4 (live registration check + Part 1 smoke) run from this fresh tree. Teardown at gate end: `rm -rf "$GATE"` and `git -C <each repo> config --unset uploadpack.allowReachableSHA1InWant` for the three repos above (§1.19; the config keys are gate-scoped state).
 
 ### Phase 3 — tool registration, and Phase 4 — smoke
 

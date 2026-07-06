@@ -1,0 +1,50 @@
+=== rehearsal codex on rust-v0.125.0 (generation, §1.15) ===
+worktree HEAD base check:
+637f7dd6d737f3961e6bf32fbb3861c4953269c5
+rev-list count: 14
+trailer count: 14
+conflicts: 96bcf61e session.rs (constructor relocation), a17bc74e handlers/mod.rs (import rename) — resolved in target_paths
+cargo build --bin codex: exit 0 (2m23s)
+cargo test -p codex-core context_bonsai: 38 passed 0 failed
+strings probe:
+anchor_id must be a non-empty stringcontext-bonsai-retrieve handler received unsupported payloadapply_patchstruct PruneArgsWire with 5 elementsstruct RetrieveArgsWire with 1 elementapply_patch is unavailable in this session
+CODEX_SANDBOX_NETWORK_DISABLED1[context-bonsai] You have access to two tools for managing long transcripts: `context-bonsai-prune` archives a completed contiguous range behind a `[PRUNED: <anchor-id> to <range-end-id>]` placeholder, and `context-bonsai-retrieve` restores an archive by its anchor id. Selection uses `from_pattern` and `to_pattern` text matches to pick boundaries; do not expose your internal ranking heuristics 
+context-bonsai-prune rejected: 
+"context-bonsai-retrieve rejected: 
+event core/src/context_bonsai.rs:658context_bonsaimessagehistory_lenflags_lencodex_core::context_bonsaicore/src/context_bonsai.rstoassistantcontext_bonsai: archived_flags length did not match history lengthhistory/archived_flags length mismatchcontext-bonsai-prunelocal-shellcustomtool-searchweb-searchghost-snapshotcompactionevent core/src/tools/registry.rs:385codex_core::tools::registrycore/src/tools/registry.rsevent core/src/tools/registry.rs:387danger-full-accessread-onlyworkspace-writeevent core/src/tools/registry.rs:535event core/src/tools/registry.rs:678call_idtool_namehook_nameerrorevent core/src/tools/registry.rs:687<collaboration_mode></collaboration_mode>
+shellcontainer.execlocal_shellshell_commandlist_mcp_resourceslist_mcp_resource_templatesread_mcp_resourceupdate_plancontext-bonsai-prunecontext-bonsai-retrievejs_repljs_repl_resetrequest_user_inputrequest_permissionsDynamic toolsTools provided by the current Codex thread.tool_searchtool_suggestapply_patchtest_sync_toolpngview_imageresume_agentspawn_agentsend_inputwait_agentclose_agentsend_messagefollowup_tasklist_agentsspawn_agents_on_csvreport_agent_job_result
+This indicates a bug in the program. This Undefined Behavior check is optional, and cannot be relied on for safety.struct BonsaiArchiveMetaanchor_idStable identifier of the anchor message (first message in the archived range).range_end_idStable identifier of the last message in the archived range.summaryHuman-readable summary of what was pruned. Non-empty.index_termsIndex terms that help the model decide whether to retrieve this archive. Non-empty.reasonOptional free-form reason the model supplied when it called `context-bonsai-prune`.Metadata fields that are cheap to render and summarize the archived range. Keeping these separate from the heavyweight `archived_history` makes placeholder rendering and gauge logic cheap at every turn.BonsaiArchiveMetacodex_context_bonsai::archive::BonsaiArchiveMetaunsafe precondition(s) violated: usize::unchecked_add cannot overflow
+tool_suggestionstruct ToolSuggestArgscalled `Result::unwrap()` on an `Err` valuemid > lenfrom_patternSubstring that uniquely identifies the first message of the range to archive.to_patternSubstring that uniquely identifies the last message of the range to archive.summaryPlain-text summary of the archived range. Surfaced inside the placeholder.index_termsNon-empty list of index terms the model can use to rediscover the archive later.reasonOptional rationale for archiving this range.context-bonsai-pruneArchive a contiguous range of the current transcript behind a placeholder, moving its content into durable bonsai storage so the live context stays focused.anchor_idAnchor id returned by a prior prune operation; identifies which archive to restore.context-bonsai-retrieveRestore a previously archived bonsai range into the live transcript, identified by its anchor id.unsafe precondition(s) violated: Vec::from_parts_in requires that length <= capacity
+[ ][x]PruneArgsWirefrom_patternto_patternsummaryindex_termsreasonanchor_idcontext-bonsai-prune handler received unsupported payload
+Z. The live transcript now shows a placeholder; use context-bonsai-retrieve with anchor_id 
+change-scope diff:
+M	codex-rs/Cargo.lock
+M	codex-rs/app-server-protocol/src/protocol/thread_history.rs
+M	codex-rs/core/Cargo.toml
+M	codex-rs/core/src/compact.rs
+M	codex-rs/core/src/compact_remote.rs
+A	codex-rs/core/src/context_bonsai.rs
+A	codex-rs/core/src/context_bonsai_tests.rs
+M	codex-rs/core/src/hook_runtime.rs
+M	codex-rs/core/src/lib.rs
+M	codex-rs/core/src/session/mod.rs
+M	codex-rs/core/src/session/rollout_reconstruction_tests.rs
+M	codex-rs/core/src/session/session.rs
+M	codex-rs/core/src/session/tests.rs
+M	codex-rs/core/src/state/session.rs
+A	codex-rs/core/src/tools/handlers/context_bonsai.rs
+M	codex-rs/core/src/tools/handlers/mod.rs
+M	codex-rs/core/src/tools/spec.rs
+M	codex-rs/core/tests/common/context_snapshot.rs
+M	codex-rs/core/tests/suite/compact.rs
+M	codex-rs/hooks/Cargo.toml
+M	codex-rs/hooks/src/events/session_start.rs
+M	codex-rs/hooks/src/events/user_prompt_submit.rs
+M	codex-rs/protocol/Cargo.toml
+M	codex-rs/protocol/src/protocol.rs
+M	codex-rs/rollout/src/metadata_tests.rs
+A	codex-rs/tools/src/context_bonsai_tool.rs
+M	codex-rs/tools/src/lib.rs
+M	codex-rs/tools/src/tool_registry_plan.rs
+M	codex-rs/tools/src/tool_registry_plan_types.rs
+generated-artifact probe: 0
