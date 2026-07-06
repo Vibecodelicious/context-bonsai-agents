@@ -1,0 +1,62 @@
+[
+  {
+    "row_id": "r01",
+    "command": "npm run check-types",
+    "frozen_upstream_head_sha": "07593bb42ae95793c6dbf39918c8205f0fdf07bb",
+    "frozen_source_head_sha": "f97ffd26a88685763d181393c282dc775b741530",
+    "exit_code": 0,
+    "result": "green",
+    "artifact_path": "/tmp/cline-cycle-2.17.0/logs/baseline-r01-check-types.log",
+    "provenance_ref": "worktree cline/.agent_tmp/rebase-on-v2.17.0-cli @ 07593bb42a; must-be-green"
+  },
+  {
+    "row_id": "r02",
+    "command": "test ! -f src/core/task/ContextBonsaiApplier.ts && echo missing-as-expected || (echo unexpected-presence && false)",
+    "frozen_upstream_head_sha": "07593bb42ae95793c6dbf39918c8205f0fdf07bb",
+    "frozen_source_head_sha": "f97ffd26a88685763d181393c282dc775b741530",
+    "exit_code": 0,
+    "result": "missing-as-expected",
+    "artifact_path": "/tmp/cline-cycle-2.17.0/logs/baseline-existence-probe.txt",
+    "provenance_ref": "git ls-files src/core/task/ContextBonsaiApplier.ts -> empty (absent on tag)"
+  },
+  {
+    "row_id": "r03",
+    "command": "npm run test:unit",
+    "frozen_upstream_head_sha": "07593bb42ae95793c6dbf39918c8205f0fdf07bb",
+    "frozen_source_head_sha": "f97ffd26a88685763d181393c282dc775b741530",
+    "exit_code": 0,
+    "result": "green",
+    "artifact_path": "/tmp/cline-cycle-2.17.0/logs/baseline-r03-test-unit.log",
+    "provenance_ref": "1428 passing; must-be-green"
+  },
+  {
+    "row_id": "r04",
+    "command": "npm run cli:build && node cli/dist/cli.mjs version",
+    "frozen_upstream_head_sha": "07593bb42ae95793c6dbf39918c8205f0fdf07bb",
+    "frozen_source_head_sha": "f97ffd26a88685763d181393c282dc775b741530",
+    "exit_code": 0,
+    "result": "green",
+    "artifact_path": "/tmp/cline-cycle-2.17.0/logs/baseline-r04-cli-build.log",
+    "provenance_ref": "Cline CLI version: 2.17.0; must-be-green"
+  },
+  {
+    "row_id": "r05",
+    "command": "npm test",
+    "frozen_upstream_head_sha": "07593bb42ae95793c6dbf39918c8205f0fdf07bb",
+    "frozen_source_head_sha": "f97ffd26a88685763d181393c282dc775b741530",
+    "exit_code": 0,
+    "result": "green",
+    "artifact_path": "/tmp/cline-cycle-2.17.0/logs/baseline-r05-side-test.log",
+    "provenance_ref": "side repo cline_context_bonsai; 72 passing; must-be-green"
+  },
+  {
+    "row_id": "r06",
+    "command": "npm run typecheck",
+    "frozen_upstream_head_sha": "07593bb42ae95793c6dbf39918c8205f0fdf07bb",
+    "frozen_source_head_sha": "f97ffd26a88685763d181393c282dc775b741530",
+    "exit_code": 0,
+    "result": "green",
+    "artifact_path": "/tmp/cline-cycle-2.17.0/logs/baseline-r06-side-typecheck.log",
+    "provenance_ref": "side repo cline_context_bonsai; must-be-green"
+  }
+]
