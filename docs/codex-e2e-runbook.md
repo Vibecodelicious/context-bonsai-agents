@@ -76,7 +76,7 @@ EXECUTED 2026-05-20 (artifact `protocol-a-oracle.jsonl`, thread `019e46cd-47c9-7
 
 **Bound, never executed live.** The first routine cycle that reaches the live e2e gate must run both; until they pass, no full parity claim exists (procedure doc, Stage 5 record). Before treating a cycle as that "first" one, grep the prior committed records — `grep -l 'E2E-04\|E2E-06' codex_context_bonsai/docs/e2e-results-*-live.md` — for existing PASS evidence. Both drives are COMPOSED:
 
-- **E2E-04**: the gauge line is hook-injected every `GAUGE_CADENCE_TURNS = 5` user turns (SOURCE-VERIFIED, `codex_context_bonsai/src/lib.rs:45`; hook site `codex/codex-rs/hooks/src/events/user_prompt_submit.rs`). Drive the session past user turn 5; on a cadence turn, with tool use forbidden for that turn, ask the model to quote verbatim any context-pressure guidance it currently sees; off-cadence turns must show no gauge quote. Evidence is the follow-up model quote only — the event stream cannot carry hook-injection claims. Verdict semantics stay in the procedure doc's E2E-04 binding.
+- **E2E-04**: the gauge line is hook-injected every `GAUGE_CADENCE_TURNS = 5` user turns (SOURCE-VERIFIED, `codex_context_bonsai/src/lib.rs:45`; hook site `codex/codex-rs/hooks/src/events/user_prompt_submit.rs`). Drive the session past user turn 5; on a cadence turn, with tool use forbidden for that turn, ask the model to quote verbatim any context-pressure guidance it currently sees. The no-gauge control check must run on an off-cadence turn **before the first cadence turn** (e.g. turn 2): once a gauge has been injected it persists in the conversation via `additional_contexts`, so later off-cadence turns can legitimately still quote it (EXECUTED finding, 2026-07-06 — the pre-cadence control is the only clean negative). Evidence is the follow-up model quote only — the event stream cannot carry hook-injection claims. Verdict semantics stay in the procedure doc's E2E-04 binding.
 - **E2E-06**: after an E2E-01-style prune, end the process, then `codex exec --json resume <session-id>` and have the model quote the placeholder (and retrieve by the recorded anchor id). PASS additionally requires the `bonsai_archive` rollout entry to survive reload — the reconstruction path is SOURCE-VERIFIED (`codex/codex-rs/core/src/session/rollout_reconstruction.rs`), which is precisely what this scenario upgrades to behavior-verified.
 
 E2E-05 stays non-live per its recorded justification (procedure doc); the side crate's `cargo test` covers the fail-closed path.
@@ -116,7 +116,7 @@ cd context-bonsai-agents
 git config protocol.file.allow always
 git config url."file:///home/basil/projects/context-bonsai-agents/codex".insteadOf https://github.com/Vibecodelicious/codex.git
 git config url."file:///home/basil/projects/context-bonsai-agents/codex_context_bonsai".insteadOf https://github.com/Vibecodelicious/codex_context_bonsai.git
-git submodule update --init --depth 1 codex codex_context_bonsai
+git submodule update --init codex codex_context_bonsai   # no --depth 1: the codex pin is a non-tip commit a depth-1 fetch cannot acquire (EXECUTED finding, 2026-07-06 gate — full-depth fetch with allowReachableSHA1InWant succeeds)
 cd codex/codex-rs && cargo build --bin codex
 strings target/debug/codex | grep -E 'context-bonsai-(prune|retrieve)'
 ```
