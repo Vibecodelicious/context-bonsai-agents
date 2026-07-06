@@ -1,0 +1,17 @@
+=== side-crate cargo test
+   Doc-tests codex_context_bonsai
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+rc=0
+=== fmt
+[m[32m+    );
+[m }
+ 
+rc=0
+=== clippy
+    Checking codex-context-bonsai v0.0.0 (/home/basil/projects/context-bonsai-agents/codex_context_bonsai)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.85s
+rc=0

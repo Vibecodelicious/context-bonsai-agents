@@ -1,0 +1,27 @@
+=== cargo build --bin codex (2026-07-06T04:02:57Z)
+   Compiling codex-app-server-client v0.0.0 (/home/basil/projects/context-bonsai-agents/codex/.agent_tmp/rehearsal-1fda843fbc/codex-rs/app-server-client)
+   Compiling codex-tui v0.0.0 (/home/basil/projects/context-bonsai-agents/codex/.agent_tmp/rehearsal-1fda843fbc/codex-rs/tui)
+   Compiling codex-exec v0.0.0 (/home/basil/projects/context-bonsai-agents/codex/.agent_tmp/rehearsal-1fda843fbc/codex-rs/exec)
+   Compiling codex-cloud-tasks v0.0.0 (/home/basil/projects/context-bonsai-agents/codex/.agent_tmp/rehearsal-1fda843fbc/codex-rs/cloud-tasks)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2m 23s
+build-rc=0
+=== strings probe
+10
+=== cargo test -p codex-core context_bonsai
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/all.rs (target/debug/deps/all-b9376bc7c99cb4be)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 980 filtered out; finished in 0.00s
+
+     Running tests/responses_headers.rs (target/debug/deps/responses_headers-db642a84a03a7639)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+test-rc=0
+=== done 2026-07-06T04:07:39Z
