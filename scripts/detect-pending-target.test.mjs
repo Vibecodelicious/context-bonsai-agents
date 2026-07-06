@@ -234,7 +234,7 @@ test('--plan resolves all live-spec bindings without running any query', () => {
   assert.equal(r.status, 0, r.stderr);
   const plan = JSON.parse(r.stdout);
   const names = plan.map((p) => p.harness).sort();
-  assert.deepEqual(names, ['Claude Code', 'OpenCode', 'Pi']);
+  assert.deepEqual(names, ['Claude Code', 'Codex', 'OpenCode', 'Pi']);
   const cc = plan.find((p) => p.harness === 'Claude Code');
   assert.match(cc.upstream, /^npm @anthropic-ai\/claude-code$/);
   assert.match(cc.ported, /^doc-file tweakcc_context_bonsai\/docs semantic-anchor-analysis-$/);
