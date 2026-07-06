@@ -86,7 +86,7 @@ function maxVersion(strings) {
 }
 
 // Extract bound harness sections from Part 4. A bound section is a `## 4.x`
-// heading carrying a `(shape: ...)` marker; schema (§4.1) and unbound (§4.7)
+// heading carrying a `(shape: ...)` marker; schema (§4.1) and unbound (§4.8)
 // sections carry none and are skipped by construction.
 function loadBoundHarnesses() {
   let specText;

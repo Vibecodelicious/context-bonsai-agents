@@ -19,5 +19,9 @@
   "codex": {
     "last_cycle_start": "2026-07-06T06:20:10Z",
     "evidence": "plan commit dde09e4 (rust-v0.125.0 cycle plan)"
+  },
+  "kilo": {
+    "last_cycle_start": "2026-07-06T09:51:04Z",
+    "evidence": "kilo_context_bonsai commit 7dc2590 (Stage 5 seal; Stage 6 binding act per forward-port-spec §1.20)"
   }
 }
