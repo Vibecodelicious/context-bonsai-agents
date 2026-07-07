@@ -18,7 +18,7 @@ The plugin registers hooks and one engine instance at load time, but Hermes deep
 - Cadence: every 5 turns (a turn = one `pre_llm_call` firing for the session), first gauge on the 5th turn. Urgent escalation: crossing INTO the `>80%` band fires once immediately off-cadence and RESETS the counter (next mandatory gauge 5 turns later); turns that remain above 80% without a fresh crossing do not re-fire outside the reset cadence. Cadence state lives on the live engine copy.
 - Delivery: the hook returns text wrapped in a system-reminder-style wrapper (match the OpenCode gauge text semantics; adapt wording minimally). The host appends it to the user message — that satisfies in-band delivery (binding `gauge-channel`).
 - Silence: if `last_prompt_tokens` is 0/absent or `context_length` is 0/unknown, the hook returns nothing. `get_status()` remains accurate regardless (host duty).
-- Context length source: `update_model(...)` receives `context_length` from the host, which resolves config `model.context_length` first, short-circuiting all probing (`agent/agent_init.py:1480-1496`; `agent/model_metadata.py:1811-1813`). The gauge drive uses the scratch config's `model.context_length` (Story 1); the silence drive uses a scratch config that OMITS `model.context_length` — genuine host-path silence, never a value faked inside the engine.
+- Context length source: `update_model(...)` receives `context_length` from the host, which resolves config `model.context_length` first, short-circuiting all probing (`agent/agent_init.py:1480-1496`; `agent/model_metadata.py:1811-1813`). The gauge drive uses the scratch config's `model.context_length` (Story 1). **Amended post-run (SPEC-GAP, Story 4 run 1):** context-length silence is unreachable through the real host path — `get_model_context_length` defaults an unresolved length to 256000 (`agent/model_metadata.py`, `DEFAULT_FALLBACK_CONTEXT`), never 0. The real-path silence drive exercises the **missing-usage** path (`last_prompt_tokens` stays 0 when the provider returns no usage); context-length-0 silence remains a defensive unit-level guarantee only.
 
 ## Acceptance Criteria
 
@@ -26,19 +26,19 @@ The plugin registers hooks and one engine instance at load time, but Hermes deep
 - [ ] Cadence logic unit-tested (5-turn period, urgent-escalation override, per-session state).
 - [ ] Silence fallback unit-tested (missing usage; missing context length).
 - [ ] Hook routing: source-verified payload path to the live engine documented in the completion report with citations; a unit test proves a stale-singleton scenario would be detected (e.g. the routing helper raises/returns-nothing when it cannot reach a live `BonsaiContextEngine`); a second unit test proves the no-registry-entry path (bind never happened for the session) returns nothing and surfaces the condition in `get_status()`.
-- [ ] Real-CLI drive (`scripts/drive-gauge.sh`): a multi-turn scenario whose scripted `usage` climbs through the bands with a stub-supplied context length. Asserts from stub-recorded requests: gauge text appears appended to the user message at the expected turns only; band text matches the scripted usage percentages; the `>80%` request contains `PRUNE NOW`. Plus a silence drive: no context length available through the real path → no gauge text in any request.
-- [ ] `update_from_response` correctness against the host's usage dict shape (source-verify the dict keys the host passes — row 4 primitives, `agent/context_compressor.py:1043-1047`).
+- [ ] Real-CLI drive (`scripts/drive-gauge.sh`): a multi-turn scenario whose scripted `usage` climbs through the bands with a stub-supplied context length. **Amended post-run (SPEC-GAP, Story 4 run 1):** the multi-turn scenario requires a persistent REPL session driven over a PTY (`tools/repl_driver.py`) — `pre_llm_call` fires once per user turn (`agent/conversation_loop.py:571`) and cadence state is in-memory per process, so `hermes -z` (one turn per process) cannot observe cadence. Asserts from stub-recorded requests: gauge text appears appended to the user message at the expected turns only; band text matches the scripted usage percentages; the `>80%` request contains `PRUNE NOW`. Plus a silence drive: provider returns no usage → no gauge text in any request (see amended silence binding above).
+- [ ] `update_from_response` correctness against the host's usage dict shape (source-verify the dict keys the host passes — row 4 primitives, `agent/context_compressor.py:1042-1047`).
 - [ ] pytest + ruff green; baseline compared.
 
 ## Context References
 
 - Spec pair: Gauge path; System guidance path (channel split). Bindings keys: `gauge-channel`, `usage-api`. Shared spec: Gauge Requirement (semantics, bands, fallback).
-- Harness: `agent/turn_context.py:355-456`; `hermes_cli/plugins.py` (`invoke_hook`, hook registration); `agent/context_engine.py:64, 205-208`; `agent/context_compressor.py:1043-1047`; `run_agent.py:2208-2221`; providers/ context-length resolution.
+- Harness: `agent/turn_context.py:355-456`; `hermes_cli/plugins.py` (`invoke_hook`, hook registration); `agent/context_engine.py:64, 205-208`; `agent/context_compressor.py:1042-1047`; `run_agent.py:2208-2221`; providers/ context-length resolution.
 - Reference: `opencode_context_bonsai_plugin/src/gauge.ts` (band text), `pi_context_bonsai/src/gauge.ts`.
 
 ### New Files to Create
 
-`context-bonsai/gauge.py`, `scripts/drive-gauge.sh`, scenario files, tests. Modified: `context-bonsai/engine.py`, `context-bonsai/__init__.py` (hook registration), `tools/stub_provider.py` / `scripts/setup-scratch-home.sh` (context-length path).
+`context-bonsai/gauge.py`, `scripts/drive-gauge.sh`, `tools/repl_driver.py` (PTY REPL driver — amended post-run, see drive criterion), scenario files, tests. Modified: `context-bonsai/engine.py`, `context-bonsai/__init__.py` (hook registration), `tools/stub_provider.py` / `scripts/setup-scratch-home.sh` (context-length path).
 
 ## Testing Strategy
 
