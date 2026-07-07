@@ -1,0 +1,82 @@
+[
+  {
+    "row_id": "b01",
+    "command": "git clone --branch v2026.7.1 --depth 1 https://github.com/NousResearch/hermes-agent <clone> && uv sync",
+    "frozen_upstream_head_sha": "7c1a029553d87c43ecff8a3821336bc95872213b",
+    "frozen_source_head_sha": "39c6bac3f1c3226b415347881b27245df3c4a500",
+    "exit_code": 0,
+    "result": "PASS",
+    "artifact_path": "/tmp/hermes-bonsai-e2e-logs/cal-run-2/b01.log",
+    "provenance_ref": "manifest.json hydration record (uv sync exit 0, 2026-07-07)"
+  },
+  {
+    "row_id": "b02",
+    "command": "uv run --project \"$HERMES_AGENT_ROOT\" pytest tests -q",
+    "frozen_upstream_head_sha": "7c1a029553d87c43ecff8a3821336bc95872213b",
+    "frozen_source_head_sha": "39c6bac3f1c3226b415347881b27245df3c4a500",
+    "exit_code": 0,
+    "result": "PASS",
+    "artifact_path": "/tmp/hermes-bonsai-e2e-logs/cal-run-2/b02.log",
+    "provenance_ref": "91 passed"
+  },
+  {
+    "row_id": "b03",
+    "command": "uvx ruff@0.15.10 check .",
+    "frozen_upstream_head_sha": "7c1a029553d87c43ecff8a3821336bc95872213b",
+    "frozen_source_head_sha": "39c6bac3f1c3226b415347881b27245df3c4a500",
+    "exit_code": 0,
+    "result": "PASS",
+    "artifact_path": "/tmp/hermes-bonsai-e2e-logs/cal-run-2/b03.log",
+    "provenance_ref": "All checks passed!"
+  },
+  {
+    "row_id": "b04",
+    "command": "test -f docs/binding-verification-2026.7.1.md && echo present-as-expected || (echo missing-seed && false)",
+    "frozen_upstream_head_sha": "7c1a029553d87c43ecff8a3821336bc95872213b",
+    "frozen_source_head_sha": "39c6bac3f1c3226b415347881b27245df3c4a500",
+    "exit_code": 0,
+    "result": "PASS",
+    "artifact_path": "/tmp/hermes-bonsai-e2e-logs/cal-run-2/b04.log",
+    "provenance_ref": "present-as-expected (same-target seed doc, plan §2)"
+  },
+  {
+    "row_id": "p02",
+    "command": "uv run --project \"$HERMES_AGENT_ROOT\" pytest tests -q",
+    "frozen_upstream_head_sha": "7c1a029553d87c43ecff8a3821336bc95872213b",
+    "frozen_source_head_sha": "39c6bac3f1c3226b415347881b27245df3c4a500",
+    "exit_code": 0,
+    "result": "PASS",
+    "artifact_path": "/tmp/hermes-bonsai-e2e-logs/cal-run-2/p02.log",
+    "provenance_ref": "91 passed (no worse than b02)"
+  },
+  {
+    "row_id": "p03",
+    "command": "uvx ruff@0.15.10 check .",
+    "frozen_upstream_head_sha": "7c1a029553d87c43ecff8a3821336bc95872213b",
+    "frozen_source_head_sha": "39c6bac3f1c3226b415347881b27245df3c4a500",
+    "exit_code": 0,
+    "result": "PASS",
+    "artifact_path": "/tmp/hermes-bonsai-e2e-logs/cal-run-2/p03.log",
+    "provenance_ref": "All checks passed! (no worse than b03)"
+  },
+  {
+    "row_id": "p05",
+    "command": "bash scripts/run-scenarios.sh",
+    "frozen_upstream_head_sha": "7c1a029553d87c43ecff8a3821336bc95872213b",
+    "frozen_source_head_sha": "39c6bac3f1c3226b415347881b27245df3c4a500",
+    "exit_code": 0,
+    "result": "PASS",
+    "artifact_path": "/tmp/hermes-bonsai-e2e-logs/cal-run-2/p05.log",
+    "provenance_ref": "ALL ROWS PASS (8/8 matrix; gate 8; carries to Phase 6 row 1)"
+  },
+  {
+    "row_id": "e01",
+    "command": "HERMES_AGENT_ROOT=\"$HERMES_AGENT_ROOT\" bash scripts/drive-protocol-a-live.sh",
+    "frozen_upstream_head_sha": "7c1a029553d87c43ecff8a3821336bc95872213b",
+    "frozen_source_head_sha": "39c6bac3f1c3226b415347881b27245df3c4a500",
+    "exit_code": 0,
+    "result": "PASS",
+    "artifact_path": "/tmp/hermes-bonsai-e2e-logs/cal-run-2/e01.log",
+    "provenance_ref": "DRIVE PASS: Protocol A live-model secret-prune oracle (5 host-state verdicts PASS)"
+  }
+]
