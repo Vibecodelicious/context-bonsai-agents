@@ -77,7 +77,7 @@ Run from `/tmp/hermes-bonsai-stage4/hermes_context_bonsai` unless noted. Source 
 
 - Approval Status: approved
 - Approval Citation: owner directive via showrunner 2026-07-07 ("add context bonsai to Hermes agent", HAND_OFF Active Thread) + standing orders LOCAL LANDINGS ARE ROUTINE and DRIVE (2026-07-05)
-- Plan Commit Hash: recorded at commit (see epic seal ledger)
+- Plan Commit Hash: 2a39654 (follow-up hash-recording commit excluded)
 - Ready-for-Orchestration: yes (after plan commit)
 
 ## Completion Checklist
