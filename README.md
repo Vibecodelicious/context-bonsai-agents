@@ -1,8 +1,10 @@
 # Context Bonsai
 
-Context Bonsai gives coding agents a way to manage long conversations without waiting for blunt overflow compaction. It lets the LLM archive older, completed parts of the transcript into compact placeholders, keep working with the important summary in view, and retrieve the full archived content later if it becomes relevant again.
+Coding agents get worse as a session drags on. Old tool output and abandoned plans pile up in the context window, and the model keeps acting on them long after they stopped mattering. When the window finally fills, the harness compacts the whole session into a summary, which usually costs you details you needed.
 
-OpenCode is the reference implementation. Other harness implementations follow the same shared behavior contract using the integration points available in each host.
+Context Bonsai adds two tools to the agent. With the first, the model archives a finished stretch of the conversation (a prune) and leaves a short summary in its place. The second brings archived messages back into view when they turn out to matter after all. Sessions maintained this way stay focused far longer before compaction becomes a problem.
+
+OpenCode is the reference implementation and gets the most day-to-day use. There are ports for Claude Code, Pi, Codex, Cline, and Kilo. The table under [Agent Harnesses](#agent-harnesses) records the testing status of each port.
 
 ## Why It Helps
 
