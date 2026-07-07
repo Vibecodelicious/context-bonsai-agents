@@ -45,6 +45,8 @@ Published side repos should use `origin` for the `Vibecodelicious` repo. They sh
 
 ## Carrying Patches on Upstream
 
+The current forward-port process is specified in [`docs/agent-specs/forward-port-spec.md`](docs/agent-specs/forward-port-spec.md) and [`docs/agent-specs/derivation-pipeline-spec.md`](docs/agent-specs/derivation-pipeline-spec.md); those specs govern how a cycle runs. The rest of this section is the manual background that process is built on.
+
 Each harness fork carries a small chain of commits on top of the upstream harness's current release. The chain is typically two kinds:
 
 - **Integration patches** — narrow host-side modifications that expose hooks the side-repo bonsai code depends on.
@@ -89,10 +91,12 @@ Side-repo READMEs should focus on:
 
 Side-repo `DEVELOPMENT.md` files should contain maintainer details, build/test commands, implementation boundaries, and links back to the shared spec.
 
+## AI Self-Maintenance
+
+The ports are kept current by an AI self-maintenance system that forward-ports Context Bonsai onto new upstream releases. The loop detects a new upstream release and checks whether the harness is due (`scripts/detect-pending-target.mjs`, `scripts/check-cycle-cadence.mjs`), starts a cycle and seeds its intent log (`scripts/invoke-routine-cycle.mjs`), wakes on schedule (`scripts/routine-wake.sh`), and escalates when a cycle needs a human (`scripts/dispatch-escalation.mjs`). The routine path and its cadence gate are specified in [`docs/agent-specs/forward-port-spec.md`](docs/agent-specs/forward-port-spec.md) §1.20–§1.21. For the full agent-facing process, see [`docs/agent-specs/README.md`](docs/agent-specs/README.md).
+
 ## Backlog
 
-- Automated per-agent rebase/re-implementation to make sure Context Bonsai works on the latest release of each supported agent.
-- Forward-port planning contract: before implementing a port against a new host release, require the parent epic to pin the exact target release and define reproducible validation artifacts. For patched, minified, or closed-source hosts, the plan must record the host version/platform, extraction tool/version, reproduction command, artifact checksum, and evidence expected from that artifact. Local installs may be used only to recreate the pinned target artifact, not as ambient truth; credentials must never be part of validation artifacts.
 - Automated e2e test for per-agent user-installation instructions.
 - Automated propagation of spec changes from the main spec to per-agent specs.
 - Submodule `opencode_context_bonsai_plugin`: clean commit history rewrite.

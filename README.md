@@ -52,22 +52,20 @@ Pruning is non-destructive in the intended behavior model: archived content is h
 
 This repo explains shared behavior. Harness-specific installation, verification, and security notes live in each side repo.
 
-Status meanings:
-
-- **Verified**: installed and exercised end to end in the target harness.
-- **Untested**: implementation work exists, but target-harness behavior has not been verified.
+**Verified** means the port was installed and exercised end to end in the target harness against the pinned upstream version and date shown.
 
 Validation notes use [Protocol A](docs/context-bonsai-e2e-template.md#protocol-a-secret-prune-oracle) as the shared live prune/retrieve check. Pinned-target semantic patch evidence means the integration patch was checked against a recorded target host version and artifact, not against an unversioned local install.
 
 | Agent harness | Status | Notes | Install and usage |
 | --- | --- | --- | --- |
-| OpenCode | Verified | Reference implementation. | [opencode-context-bonsai installation](https://github.com/Vibecodelicious/opencode_context_bonsai_plugin#installation) |
-| Claude Code via tweakcc | Verified | Native Claude Code `2.1.143` was exercised end to end with the tweakcc 4.0 patch-application flow and MCP server. Install wiring, prune/retrieve, marker persistence, resume handling, Protocol A, and pinned-target semantic patch evidence passed. Gauge E2E was not exercised. | [tweakcc Context Bonsai installation](https://github.com/Vibecodelicious/tweakcc_context_bonsai#installation) |
-| Pi | Verified | A standalone Pi extension — no Pi fork. Installs into Pi's user-global extension directory and loads from any working directory. Pruning confirmed end to end against a live model. | [Pi Context Bonsai installation](https://github.com/Vibecodelicious/pi_context_bonsai#installation) |
-| Codex | Verified | Integrated into the Codex fork. A live logged-in test environment verified tool registration, ambiguity rejection, prune/retrieve, and Protocol A. Gauge cadence was not exercised. | [Codex Context Bonsai installation](https://github.com/Vibecodelicious/codex_context_bonsai#installation) |
-| Gemini CLI | Untested | Integrated into the Gemini CLI fork. Running a verification needs a Gemini API key or Google sign-in. | [Gemini CLI Context Bonsai installation](https://github.com/Vibecodelicious/gemini-cli_context_bonsai#installation) |
-| Cline | Untested | Integrated into the Cline fork. Cline runs as a VS Code extension; there is no automated way to verify it yet. | [Cline Context Bonsai installation](https://github.com/Vibecodelicious/cline_context_bonsai#installation) |
-| Kilo | Untested | Integrated into the Kilo fork. Kilo includes an OpenCode-derived CLI runtime used by its VS Code surfaces; live target-harness verification has not run yet. | [Kilo Context Bonsai installation](https://github.com/Vibecodelicious/kilo_context_bonsai#installation) |
+| OpenCode | Verified | Reference implementation. Sealed on OpenCode `v1.17.13`; Protocol A passed 2026-07-07. | [opencode-context-bonsai installation](https://github.com/Vibecodelicious/opencode_context_bonsai_plugin#installation) |
+| Claude Code via tweakcc | Verified | Claude Code native `2.1.201`, verified 2026-07-05 via the tweakcc patch-application flow and MCP server. Install, prune/retrieve, marker persistence, resume, Protocol A, and pinned-target semantic patch evidence passed; gauge cadence was not driven live. | [tweakcc Context Bonsai installation](https://github.com/Vibecodelicious/tweakcc_context_bonsai#installation) |
+| Pi | Verified | Standalone Pi extension — no Pi fork; installs into Pi's user-global extension directory and loads from any working directory. Verified against Pi `0.73.1` on 2026-07-06: install, live prune, and secret-oracle recall passed. | [Pi Context Bonsai installation](https://github.com/Vibecodelicious/pi_context_bonsai#installation) |
+| Codex | Verified | Codex fork on upstream `rust-v0.125.0`, verified 2026-07-06: tool registration, ambiguity rejection, prune/retrieve, Protocol A, gauge cadence, and resume persistence passed. | [Codex Context Bonsai installation](https://github.com/Vibecodelicious/codex_context_bonsai#installation) |
+| Cline | Verified | Cline fork on upstream `v2.17.0-cli`, verified 2026-07-06: prune/retrieve, ambiguity rejection, resume persistence, gauge cadence, and Protocol A passed. The VS Code checkpoint-restore path remains manual. | [Cline Context Bonsai installation](https://github.com/Vibecodelicious/cline_context_bonsai#installation) |
+| Kilo | Verified | Kilo fork on Kilo `v7.2.20`, verified 2026-07-06 against a live Kilo CLI build: tool registration, prune/retrieve, and boundary rejection passed. | [Kilo Context Bonsai installation](https://github.com/Vibecodelicious/kilo_context_bonsai#installation) |
+
+A Gemini CLI integration exists in a fork but has not been live-validated. It is not published as a usable port yet, so it is not listed above and no install path is offered.
 
 ## For Maintainers
 
