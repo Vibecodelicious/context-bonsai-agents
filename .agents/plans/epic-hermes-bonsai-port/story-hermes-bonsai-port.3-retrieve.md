@@ -23,7 +23,7 @@ Inherited from the epic. The retrieve result must let the model keep working imm
 
 - [ ] Retrieve input validation + unknown-anchor / already-retrieved / same-step errors, all deterministic, zero mutation — unit-tested.
 - [ ] Success path: content in tool result; placeholder cleared and originals restored in the `compress()` output; store state transitions persisted atomically — unit-tested over prune-then-retrieve fixtures.
-- [ ] Real-CLI drive (`scripts/drive-retrieve.sh`): scenario — prune (turn A), plain turn, retrieve by the reported anchor id (turn B), plain turn. Asserts from stub-recorded requests: post-retrieve request contains the restored original text and no longer contains the placeholder; retrieve tool result carried the archived content.
+- [ ] Real-CLI drive (`scripts/drive-retrieve.sh`): scenario — prune (turn A), an intervening tool-call turn, retrieve by the reported anchor id (turn B), then a final content turn. (Amended post-run-1: a plain content response terminates the `hermes -z` oneshot loop, so the intervening turn must be a tool-call turn — e.g. a noop-probe tool call, per Story 2's Drive B mechanism; only the run-ending final turn is plain content.) Asserts from stub-recorded requests: post-retrieve request contains the restored original text and no longer contains the placeholder; retrieve tool result carried the archived content.
 - [ ] Same-step drive: scenario where one assistant message calls prune and retrieve for the same anchor in the same step (two tool calls in one assistant message, prune first); asserts the retrieve tool result is the guard error and the prune still realizes correctly on the next request.
 - [ ] pytest + ruff green; baseline compared.
 
