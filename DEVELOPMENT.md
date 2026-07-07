@@ -40,6 +40,7 @@ Side repos are Context Bonsai projects owned by this workspace:
 - `gemini-cli_context_bonsai`
 - `kilo_context_bonsai`
 - `pi_context_bonsai`
+- `hermes_context_bonsai`
 
 Published side repos should use `origin` for the `Vibecodelicious` repo. They should not have `upstream`. A temporary local-bare `origin` is acceptable only before the published remote is wired. Only `opencode_context_bonsai_plugin` and `tweakcc_context_bonsai` may also have a `local` remote that points to earlier local source lineage.
 
