@@ -1,14 +1,14 @@
 # Context Bonsai
 
-Context Bonsai gives coding agents a way to manage long conversations without waiting for blunt overflow compaction. It lets the LLM archive older, completed parts of the transcript into compact placeholders, keep working with the important summary in view, and retrieve the full archived content later if it becomes relevant again.
+Anyone who runs long sessions with an LLM coding agent knows the shape of a dying one. It gets slower, then sloppier, then starts making choices that only make sense if it had been reading a different conversation — and in a way, it has: the context is full of dead ends, stale plans, and tool output nobody needs anymore. Eventually auto-compaction arrives and replaces the session with a summary that is missing details you established hours ago.
 
-OpenCode is the reference implementation. Other harness implementations follow the same shared behavior contract using the integration points available in each host.
+Context Bonsai gives the model a better option. When a stretch of the conversation is finished — a debugging detour that has been closed out, forty pages of build output that served its purpose — the model archives it (a *prune*), leaving a short summary in its place. The conclusions stay in view, the dead weight leaves the prompt, and the full content can be pulled back later if it turns out to matter. Less like throwing out your notes, more like putting them in a labeled drawer.
+
+It works today in several coding agents. OpenCode is the reference implementation and has had the most exercise; ports exist for Claude Code, Pi, Codex, Cline, and Kilo, each behaving the same way. The table under [Agent Harnesses](#agent-harnesses) says plainly how tested each one is.
 
 ## Why It Helps
 
-Long coding sessions accumulate setup discussion, completed debugging paths, tool output, planning loops, and resolved implementation details. Standard context overflow handling usually waits until the window is already under pressure, then compresses broadly. That can lose details the model did not know would matter later.
-
-Context Bonsai is more selective:
+Standard context overflow handling waits until the window is already under pressure, then compresses broadly — including details the model did not know would matter later. Context Bonsai is more selective:
 
 - The model can prune contiguous ranges (one per call, as often as it wants) when it decides those ranges are stale enough to archive.
 - The archive keeps a summary and index terms in the live transcript.
