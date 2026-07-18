@@ -18,7 +18,7 @@ The composed sequences first run at the next forward-port cycle's gates. If a co
 - **Binary**: `packages/opencode/dist/opencode-linux-x64/bin/opencode`, platform-equivalent per §4.2. Every code block that uses `$BIN` sets it on its own first line, so each block is copyable in isolation.
 - **Plugin wiring** (runtime e2e only): the worktree-local `.opencode/opencode.jsonc` procedure in §4.2, including its grep verification, completed before Protocol A's first launch. Not repeated here. The install gate deliberately uses a different wiring surface — the README's global-config path (Part 2).
 - **Model and provider**: all EXECUTED evidence launched with the machine's default OpenCode provider configuration, provisioned out of band per §4.2's Credentials slot; that is the binding — no `--model` flag. Record the provider/model in the template's Test Metadata from the same out-of-band provisioning facts. A `--model <provider>/<model>` override exists and splits the provider id at the first `/` (SOURCE-VERIFIED, `packages/opencode/src/cli/cmd/run.ts:36`); use it only when the cycle brief pins a model, and record the exact value passed.
-- **Session identity** (SOURCE-VERIFIED, `packages/opencode/src/storage/db.ts:30-36`): the binary stores sessions in a per-installation-channel SQLite database, `opencode-<sanitized-channel>.db` under the OpenCode data directory (observed live at `~/.local/share/opencode/`, where prior cycles' `opencode-rebase-cycle-<sha>.db` files confirm cycle builds get their own database). `opencode run` without `--continue`/`--session` starts a fresh session; `--continue` resumes the last session of this build's database. The e2e is the only thing that launches the rebased binary during a cycle, so the `--continue` chains inside a protocol are deterministic. Diagnostic fact, not a protocol step: the `OPENCODE_DB` env var (`:memory:` or a path) overrides the database location (`db.ts:38-42`).
+- **Session identity** (SOURCE-VERIFIED, `packages/opencode/src/storage/db.ts:30-36`): the binary stores sessions in a per-installation-channel SQLite database, `opencode-<sanitized-channel>.db` under the OpenCode data directory (observed live at `~/.local/share/opencode/`, where prior cycles' `opencode-rebase-cycle-<sha>.db` files confirm cycle builds get their own database). `opencode run` without `--continue`/`--session` starts a fresh session; `--continue` resumes the last session of this build's database. The e2e is the only thing that launches the rebased binary during a cycle, so the `--continue` chains inside a protocol are deterministic. Diagnostic fact, not a protocol step: the `OPENCODE_DB` env var (`:memory:` or a path) overrides the database location (`db.ts:38-42`). Before any export, capture `SESSION_ID` from the relevant protocol's launch log/session record (for example, `grep -oE 'sessionID[=:][^[:space:]]+' .../step1.log | head -n1 | sed -E 's/^sessionID[=:]//'`) and verify it is non-empty. Every automated export MUST pass that explicit ID; bare `opencode export` is prohibited because v1.18.3 enters `prompts.autocomplete` and waits for input. Wrap every export in `timeout 60s`.
 - **Timeouts**: every launch below is wrapped in `timeout 120`. Exit code 124 (the timeout fired), or any launch that dies before the model responds, is `BLOCKED` at that step — an environmental blocker per the templates' verdict rules, not `FAIL`.
 - **Evidence directory** (per §4.2 Evidence paths; worktree-local, uncommitted): `.agent_tmp/e2e-on-<tag>/protocol-a/` and `.agent_tmp/e2e-on-<tag>/protocol-b/`, where `<tag>` keeps the `v` prefix. Create both with `mkdir -p` before Part 1.
 - **Per-run parameters**, chosen fresh each run and recorded in the result: `<tag>` — the cycle's upstream tag; `<SECRET>` — one uncommon word not otherwise present in the session (EXECUTED runs used `flamingo`, `zebra`); `<ANCHOR_ID>` — captured during Protocol B, step B3.
@@ -54,7 +54,7 @@ EOF
 
 ## Part 1: Runtime E2E (Protocols A and B)
 
-Test Metadata bindings for the runtime template's header: implementation name `opencode_context_bonsai_plugin`; repository root = the cycle worktree; runtime entry point = `$BIN run`; session storage = the per-channel database above, inspected via `$BIN export`; tool transport = OpenCode plugin loaded from TypeScript source over `file://`.
+Test Metadata bindings for the runtime template's header: implementation name `opencode_context_bonsai_plugin`; repository root = the cycle worktree; runtime entry point = `$BIN run`; session storage = the per-channel database above, inspected via `$BIN export "$SESSION_ID"`; tool transport = OpenCode plugin loaded from TypeScript source over `file://`.
 
 ### Protocol A: Secret Prune Oracle
 
@@ -90,8 +90,12 @@ BIN=packages/opencode/dist/opencode-linux-x64/bin/opencode
 # Leak check (EXECUTED): the recall step's output must NOT contain the secret.
 grep -i "<SECRET>" .agent_tmp/e2e-on-<tag>/protocol-a/step3.log
 
+# Capture the session used by Protocol A; never run a bare export.
+SESSION_ID=$(grep -oE 'sessionID[=:][^[:space:]]+' .agent_tmp/e2e-on-<tag>/protocol-a/step1.log | head -n1 | sed -E 's/^sessionID[=:]//')
+test -n "$SESSION_ID"
+
 # Full-session inspection (COMPOSED file-based variant of the EXECUTED parser — see Export inspector)
-$BIN export 2>/dev/null > .agent_tmp/e2e-on-<tag>/protocol-a/export.json
+timeout 60s $BIN export "$SESSION_ID" 2>/dev/null > .agent_tmp/e2e-on-<tag>/protocol-a/export.json
 python3 .agent_tmp/e2e-on-<tag>/inspect-export.py .agent_tmp/e2e-on-<tag>/protocol-a/export.json
 ```
 
@@ -116,7 +120,9 @@ timeout 120 $BIN run --continue \
   --print-logs --log-level DEBUG 2>.agent_tmp/e2e-on-<tag>/protocol-b/step2.log
 
 # B3 — capture the anchor id: the message id carrying archive metadata
-$BIN export 2>/dev/null > .agent_tmp/e2e-on-<tag>/protocol-b/export-pruned.json
+SESSION_ID=$(grep -oE 'sessionID[=:][^[:space:]]+' .agent_tmp/e2e-on-<tag>/protocol-b/step1.log | head -n1 | sed -E 's/^sessionID[=:]//')
+test -n "$SESSION_ID"
+timeout 60s $BIN export "$SESSION_ID" 2>/dev/null > .agent_tmp/e2e-on-<tag>/protocol-b/export-pruned.json
 python3 -c "
 import json, sys
 data = json.load(open(sys.argv[1]))
@@ -131,7 +137,7 @@ timeout 120 $BIN run --continue \
   --print-logs --log-level DEBUG 2>.agent_tmp/e2e-on-<tag>/protocol-b/step3.log
 
 # B5 — verify restoration
-$BIN export 2>/dev/null > .agent_tmp/e2e-on-<tag>/protocol-b/export-restored.json
+timeout 60s $BIN export "$SESSION_ID" 2>/dev/null > .agent_tmp/e2e-on-<tag>/protocol-b/export-restored.json
 python3 .agent_tmp/e2e-on-<tag>/inspect-export.py .agent_tmp/e2e-on-<tag>/protocol-b/export-restored.json
 ```
 
@@ -200,7 +206,9 @@ timeout 120 $BIN run --continue \
   "That info about octopuses is no longer needed. Please use the context-bonsai-prune tool to archive those messages." \
   --print-logs --log-level DEBUG 2>"$INSTALL_DIR/protocol-b/step2.log"
 
-$BIN export 2>/dev/null > "$INSTALL_DIR/protocol-b/export-pruned.json"
+SESSION_ID=$(grep -oE 'sessionID[=:][^[:space:]]+' "$INSTALL_DIR/protocol-b/step1.log" | head -n1 | sed -E 's/^sessionID[=:]//')
+test -n "$SESSION_ID"
+timeout 60s $BIN export "$SESSION_ID" 2>/dev/null > "$INSTALL_DIR/protocol-b/export-pruned.json"
 python3 -c "
 import json, sys
 data = json.load(open(sys.argv[1]))
