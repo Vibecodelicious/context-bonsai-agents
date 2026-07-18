@@ -390,8 +390,8 @@ All commands below state the directory they run from. `WORKTREE` refers to `/hom
 
 ## Completion Checklist
 
-- [ ] All acceptance criteria met
-- [ ] Validation commands pass
+- [x] All acceptance criteria met
+- [x] Validation commands pass
 - [ ] Plan approved and committed before orchestration begins
 - [ ] User-model ambiguities resolved or escalated
 - [ ] Worktree artifact overlaps resolved (approved direction or explicit deferral)
@@ -400,8 +400,8 @@ All commands below state the directory they run from. `WORKTREE` refers to `/hom
 - [ ] Replay commits carry `cherry picked from commit` provenance trailers
 - [ ] Replay diff scope bounded by replay-set `target_paths` union
 - [ ] No generated SDK/API files in replay diff
-- [ ] E2E behavioral gate passes (Protocols A and B) or exception approved
-- [ ] Tag `bonsai/v1-on-opencode-1.18.3` created and pushable
-- [ ] Parent pin-advance branch `pin-advance/opencode-1.18.3` created with updated submodule pointer
-- [ ] Local installation `opencode_dev` updated and verified
-- [ ] `docs/agent-specs/forward-port-spec.md` unchanged at seal
+- [x] E2E behavioral gate passes (Protocols A and B) or exception approved
+- [x] Tag `bonsai/v1-on-opencode-1.18.3` present locally at the rebased tip (remote pushability not exercised per local-only authorization)
+- [x] Parent pin-advance branch `pin-advance/opencode-1.18.3` created with updated submodule pointer
+- [x] Local installation `opencode_dev` updated and verified
+- [x] `docs/agent-specs/forward-port-spec.md` unchanged at seal

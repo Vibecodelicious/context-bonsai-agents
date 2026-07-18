@@ -1,0 +1,52 @@
+[
+  {
+    "row_id": "r01",
+    "command": "bun test test/tool/registry.test.ts test/session/message-v2.test.ts test/session/session.test.ts",
+    "frozen_upstream_head_sha": "127bdb30784d508cc556c71a0f32b508a3061517",
+    "frozen_source_head_sha": "3d26252cded4c110f525e1082ee591b4963cba5f",
+    "exit_code": 0,
+    "result": "pass: 58 pass, 0 fail, 110 expect() calls",
+    "artifact_path": "/home/basil/projects/context-bonsai-agents/opencode/.agent_tmp/rebase-on-v1.18.3/packages/opencode/.agent_tmp/baseline/r01.log",
+    "provenance_ref": "packages/opencode/test/tool/registry.test.ts; packages/opencode/test/session/message-v2.test.ts; packages/opencode/test/session/session.test.ts"
+  },
+  {
+    "row_id": "r02",
+    "command": "test ! -f test/session/context-bonsai.test.ts && echo missing-as-expected || (echo unexpected-presence && false)",
+    "frozen_upstream_head_sha": "127bdb30784d508cc556c71a0f32b508a3061517",
+    "frozen_source_head_sha": "3d26252cded4c110f525e1082ee591b4963cba5f",
+    "exit_code": 0,
+    "result": "missing-as-expected",
+    "artifact_path": "/home/basil/projects/context-bonsai-agents/opencode/.agent_tmp/rebase-on-v1.18.3/packages/opencode/.agent_tmp/baseline/r02.log",
+    "provenance_ref": "git ls-files test/session/context-bonsai.test.ts -> empty at frozen upstream baseline"
+  },
+  {
+    "row_id": "r03",
+    "command": "bun typecheck",
+    "frozen_upstream_head_sha": "127bdb30784d508cc556c71a0f32b508a3061517",
+    "frozen_source_head_sha": "3d26252cded4c110f525e1082ee591b4963cba5f",
+    "exit_code": 0,
+    "result": "pass",
+    "artifact_path": "/home/basil/projects/context-bonsai-agents/opencode/.agent_tmp/rebase-on-v1.18.3/packages/opencode/.agent_tmp/baseline/r03.log",
+    "provenance_ref": "packages/opencode/package.json script typecheck=tsgo --noEmit"
+  },
+  {
+    "row_id": "r04",
+    "command": "bun typecheck",
+    "frozen_upstream_head_sha": "127bdb30784d508cc556c71a0f32b508a3061517",
+    "frozen_source_head_sha": "3d26252cded4c110f525e1082ee591b4963cba5f",
+    "exit_code": 0,
+    "result": "pass",
+    "artifact_path": "/home/basil/projects/context-bonsai-agents/opencode/.agent_tmp/rebase-on-v1.18.3/packages/plugin/.agent_tmp/baseline/r04.log",
+    "provenance_ref": "packages/plugin/package.json script typecheck=tsgo --noEmit"
+  },
+  {
+    "row_id": "r05",
+    "command": "OPENCODE_VERSION=1.18.3 bun turbo run build --filter=opencode",
+    "frozen_upstream_head_sha": "127bdb30784d508cc556c71a0f32b508a3061517",
+    "frozen_source_head_sha": "3d26252cded4c110f525e1082ee591b4963cba5f",
+    "exit_code": 0,
+    "result": "pass: build and smoke tests passed",
+    "artifact_path": "/home/basil/projects/context-bonsai-agents/opencode/.agent_tmp/rebase-on-v1.18.3/packages/opencode/.agent_tmp/baseline/r05.log",
+    "provenance_ref": "packages/opencode/package.json build task; baseline build output captured before replay"
+  }
+]

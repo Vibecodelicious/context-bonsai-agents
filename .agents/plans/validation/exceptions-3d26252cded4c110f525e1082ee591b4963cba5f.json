@@ -1,1 +1,30 @@
-[]
+[
+  {
+    "path": "/home/basil/projects/opencode_context_management/opencode",
+    "status": "pre-existing-dirty-local-install",
+    "files": [
+      ".opencode/opencode.jsonc",
+      "packages/opencode/src/session/processor.ts",
+      "packages/opencode/src/tool/registry.ts",
+      "packages/opencode/src/provider/models-snapshot.ts"
+    ],
+    "decision": "preserve-in-stash-before-local-install-update",
+    "citation": "approved-cycle-plan Phase 8 step 30; user instruction to preserve existing sentinel/OAuth provisioning",
+    "credential_contents_inspected": false
+  },
+  {
+    "path": "/home/basil/projects/opencode_context_management/opencode_context_bonsai_plugin",
+    "status": "pre-existing-dirty-local-plugin",
+    "files": [
+      "dist/index.js",
+      "dist/state.d.ts",
+      "src/prune.test.ts",
+      "src/prune.ts",
+      "cost-analysis/",
+      "docs/cost-modeling-factors.md"
+    ],
+    "decision": "preserve-in-stash-before-local-install-update",
+    "citation": "approved-cycle-plan Phase 8 step 32; user instruction to preserve existing sentinel/OAuth provisioning",
+    "credential_contents_inspected": false
+  }
+]
