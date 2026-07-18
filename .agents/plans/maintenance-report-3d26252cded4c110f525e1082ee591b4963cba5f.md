@@ -12,7 +12,7 @@
 - Parent pin-advance: `b393f19faf367e1394dd89fb160502f52cd58169` was verified on `pin-advance/opencode-1.18.3`.
 - Pre-publish/local install gate: passed locally. Installation is detached at the rebased tip, built with the direct versioned command, and its binary reports `1.18.3`.
 - Context Bonsai smoke: passed with `context-bonsai-prune` and `context-bonsai-retrieve` each present once in the tool listing.
-- Temporary target-worktree plugin wiring and cycle worktree were removed; unrelated dirt was preserved.
+- Temporary target-worktree plugin wiring and cycle worktree were restored for final evidence; unrelated dirt was preserved.
 - No push, publish, remote dry-run, credential inspection, or outward action occurred.
 
 escalation-reason-code: input-credentials-missing
@@ -64,3 +64,4 @@ The cycle records are ready for a local parent-repository commit. The replay wor
 - Pre-publish install gate used the sanctioned local-clean-dir fallback after sprite upload of the 349 MB OpenCode bundle timed out. Local bundles, pin-advanced clone, README install/build, tool registration, and smoke prune/retrieve all passed; the result shares the host toolchain and host auth, and no credential contents were inspected.
 - Local installation updated to `bonsai/v1-on-opencode-1.18.3` at `0995854adbe58f1e1eaa65390c5175f58ac73a10`. Pre-existing local OpenCode/plugin changes were preserved in named stashes and recorded in the exception ledger. Direct versioned build passed, `opencode_dev` reports `1.18.3`, and the invoked tool-list smoke found both Bonsai tools.
 - No push, publish, or credential inspection occurred. Existing target plugin wiring and sentinel/OAuth provisioning were preserved.
+- Final reconciliation restored the replay worktree from its recorded branch tip after the parent submodule checkout removed its directory. The versioned binary and explicit-ID export artifacts were regenerated from the same completed sessions without repeat model calls; final target HEAD and local tag both resolve to `0995854adbe58f1e1eaa65390c5175f58ac73a10`.
