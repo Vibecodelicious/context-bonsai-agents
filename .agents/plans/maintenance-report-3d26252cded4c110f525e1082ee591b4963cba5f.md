@@ -3,7 +3,7 @@
 ## Final Report
 
 - Story: rebase cycle `3d26252cded4c110f525e1082ee591b4963cba5f` onto `v1.18.3`.
-- Status: SEALED locally after credentialed Protocol A/B evidence and final installation gate.
+- Status: SEALED locally after fresh reviewer reconciliation, isolated dependency validation, credentialed Protocol A/B evidence, and final installation gate.
 - Replay: approved three-commit replay at `0995854adbe58f1e1eaa65390c5175f58ac73a10`, based on `127bdb30784d508cc556c71a0f32b508a3061517`, with three provenance trailers and no generated artifacts.
 - Canonical validation: passed, including focused tests, Context Bonsai regression tests, OpenCode and plugin typechecks, and the versioned build.
 - Binary evidence: the target worktree binary reports `1.18.3` when invoked with `OPENCODE_DISABLE_PRUNE=true`.
@@ -12,8 +12,18 @@
 - Parent pin-advance: `b393f19faf367e1394dd89fb160502f52cd58169` was verified on `pin-advance/opencode-1.18.3`.
 - Pre-publish/local install gate: passed locally. Installation is detached at the rebased tip, built with the direct versioned command, and its binary reports `1.18.3`.
 - Context Bonsai smoke: passed with `context-bonsai-prune` and `context-bonsai-retrieve` each present once in the tool listing.
-- Temporary target-worktree plugin wiring and cycle worktree were restored for final evidence; unrelated dirt was preserved.
+- Temporary target-worktree plugin wiring and cycle worktree were removed after final evidence capture; unrelated dirt was preserved.
 - No push, publish, remote dry-run, credential inspection, or outward action occurred.
+
+## Fresh Reviewer Reconciliation
+
+- Review timestamp: `2026-07-18T21:28:12Z`.
+- H1 reproduced: the approved cycle worktree existed at `/home/basil/projects/context-bonsai-agents/opencode/.agent_tmp/rebase-on-v1.18.3`, at `0995854adbe58f1e1eaa65390c5175f58ac73a10`, with temporary `.opencode/opencode.jsonc` plugin wiring and Protocol A/B evidence.
+- H2 reproduced from `packages/opencode`: `bun typecheck` exited `2` with TS2322 duplicate `Plugin`/`PluginInput` imports resolving through the parent OpenCode tree and replay worktree.
+- Protocol evidence facts were captured before cleanup by SHA-256: Protocol A `export.json`=`45c19ad80f622317843241cee1e8a1f4f08461f53004961ccf37ef700bb18317`, `inspection.txt`=`fd085dd81468332219f796e6e42944ac93b9bccd51ffc5f960c8045ee3b01b09`; Protocol B `export-restored.json`=`01ee70a16dfb4fa3fb8379cacb912b4f924a3dad8f03d9387b027b25787551c4`, `inspection.txt`=`0875e8b3e039e626e12ae91e1be7ecc189fccd6bd4f13a18e238f8b4deb76805`.
+- H2 resolution: moved the worktree-local `node_modules` symlink aside, ran `bun install` (exit `0`), and verified `node_modules` was a real directory. Focused tests, Context Bonsai test, OpenCode typecheck, plugin typecheck, turbo build, and `OPENCODE_VERSION=1.18.3 bun run --cwd packages/opencode build --single` all exited `0`; the binary reported `1.18.3`.
+- Cleanup: `git worktree remove --force /home/basil/projects/context-bonsai-agents/opencode/.agent_tmp/rebase-on-v1.18.3` completed; subsequent worktree listing no longer includes the path. The temporary config and evidence directory were removed with it.
+- Global configuration and unrelated parent dirt were not changed by this reconciliation.
 
 escalation-reason-code: input-credentials-missing
 

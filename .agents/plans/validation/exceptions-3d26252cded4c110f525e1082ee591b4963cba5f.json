@@ -26,5 +26,27 @@
     "decision": "preserve-in-stash-before-local-install-update",
     "citation": "approved-cycle-plan Phase 8 step 32; user instruction to preserve existing sentinel/OAuth provisioning",
     "credential_contents_inspected": false
+  },
+  {
+    "path": "/home/basil/projects/context-bonsai-agents/opencode/.agent_tmp/rebase-on-v1.18.3",
+    "status": "review-finding-H1-reconciled",
+    "files": [
+      ".opencode/opencode.jsonc",
+      ".agent_tmp/e2e-on-v1.18.3/protocol-a/",
+      ".agent_tmp/e2e-on-v1.18.3/protocol-b/"
+    ],
+    "decision": "recorded Protocol A/B evidence hashes, then removed the approved temporary cycle worktree with git worktree remove --force",
+    "citation": "fresh reviewer finding H1; approved cycle plan Phase 8 step 29; review reconciliation 2026-07-18T21:28:12Z",
+    "credential_contents_inspected": false
+  },
+  {
+    "path": "replay worktree node_modules",
+    "status": "review-finding-H2-reconciled",
+    "files": [
+      "node_modules"
+    ],
+    "decision": "replaced symlinked dependency tree with isolated bun install; all canonical validation commands and direct versioned build passed",
+    "citation": "fresh reviewer finding H2; review reconciliation 2026-07-18T21:28:12Z",
+    "credential_contents_inspected": false
   }
 ]
